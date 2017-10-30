@@ -29,12 +29,7 @@ namespace ProjectX.Plugins
                 }
             }
             else {
-                int ping = Fougerite.Server.Cache[Arguments.argUser.userID].NetworkPlayer.averagePing - 100;
-                if (ping <= 40)
-                {
-                    ping = 42;
-                }
-                Fougerite.Server.Cache[Arguments.argUser.userID].Notice("Seu ping " + ping + "ms");
+                Fougerite.Server.Cache[Arguments.argUser.userID].Notice("Seu ping " + Fougerite.Server.Cache[Arguments.argUser.userID].NetworkPlayer.averagePing + "ms");
             }
 
         }

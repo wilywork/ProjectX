@@ -1,63 +1,92 @@
+using Fougerite;
 using System;
 using System.Collections.Generic;
 
 namespace ProjectX.Plugins
 {
+
     public class Kits
     {
 
-        //estancia
-        public static string cantUseKit = "Você não tem permissão para usar este kit.";
-        public static string kithelp = "/kit => para ver todos os kit's";
-        public static string kithelp2 = "/kit name => para receber o kit";
-        public static string kitredeemed = "Você recebeu o kit.";
-        public static string noAccess = "Você não tem permissão para usar este comando.";
-        public static string unknownKit = "Esse kit não existe.";
-        public static string yourKits = "Seus Kit's:";
-        public static string kitView = "{0} - {1}";
-        public static string kitTimeCooldown = "Você deve esperar {0} para usar o kit {1} novamente.";
+        public class Config
+        {
+            public string kithelp;
+            public string kithelp2;
+            public string kitredeemed;
+            public string noAccess;
+            public string unknownKit;
+            public string yourKits;
+            public string kitView;
+            public string kitTimeCooldown;
+            public static string timerIntervalKit;
+            public Dictionary<string, PropKits> listKits;
 
-        public static Inventory inventario;
+            public Config Default()
+            {
+                kithelp = "/kit => para ver todos os kit's";
+                kithelp2 = "/kit name => para receber o kit";
+                kitredeemed = "Você recebeu o kit.";
+                noAccess = "Você não tem permissão para usar este comando.";
+                unknownKit = "Esse kit não existe.";
+                yourKits = "Seus Kit's[/color]:";
+                kitView = "{0} - {1}";
+                kitTimeCooldown = " Você deve esperar {0} para usar o kit {1} novamente.";
+                timerIntervalKit = " Tempo de intervalo {0}.";
+                listKits = new Dictionary<string, PropKits>() {
+                    {"admin", new PropKits("admin", 5f, new Dictionary<string, int>() { { "uber hatchet", 1 }, { "invisible helmet", 1 }, { "invisible vest", 1 }, { "invisible pants", 1 }, { "invisible boots", 1 }, { "cooked chicken breast", 35 } })},
+                    {"starter", new PropKits(null, 60f, new Dictionary<string, int>() { { "stone hatchet", 1 }, { "torch", 1 }, { "bandage", 5}, { "cooked chicken breast", 35} })}
+                };
+                return this;
+            }
+        }
 
-        // kits
-        public static Dictionary<string, PropKits> listKits;
+        public static Config configKits = new Config();
 
         //inicia os kits
         public static void Start()
         {
-            listKits = new Dictionary<string, PropKits>();
-
-            listKits.Add("starter", new PropKits("starter", " Tempo de intervalo 1 minuto.", 60f, false, new ProjectX.Ingrediente(new List<string>() { "Stone Hatchet_1", "Torch_1", "Bandage_5", "Cooked Chicken Breast_35" })));
+            configKits = ProjectX.ReadyConfigChecked<Config>(configKits.Default(), "config/kits.json");
         }
 
         // givekits
         public static void GiveKit(Fougerite.Player player, PropKits kit)
         {
-            inventario = player.PlayerClient.rootControllable.GetComponent<Inventory>();
-
-            foreach (KeyValuePair<string, int> ingredients in kit.itens)
-            {
-                if (ProjectX.displaynameToDataBlock.ContainsKey(ingredients.Key.ToLower()))
+            if (player != null && player.PlayerClient != null) {
+                try
                 {
-                    ProjectX.AddItemInventory(player, ProjectX.displaynameToDataBlock[ingredients.Key].name, ingredients.Value);
+                    foreach (KeyValuePair<string, int> ingredients in kit.itens)
+                    {
+                        if (ProjectX.displaynameToDataBlock.ContainsKey(ingredients.Key.ToLower()))
+                        {
+                            ProjectX.AddItemInventory(player, ProjectX.displaynameToDataBlock[ingredients.Key], ingredients.Value);
+                        }
+                    }
+                    player.MessageFrom(ProjectX.configServer.NameServer, configKits.kitredeemed);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogDebug("[Error] GiveKit: "+ ex);
                 }
             }
-            player.MessageFrom(ProjectX.configServer.NameServer, kitredeemed);
+            else
+            {
+                Logger.LogDebug("[Error] Player offline para GiveKit");
+            }
         }
 
         //check permissoes e tempo de cooldown
         public static void HasKit(Fougerite.Player player, string kit)
         {
 
-            if (!listKits[kit].perm || Permission.HasPermission(player.UID, listKits[kit].namePerm))
+            if (configKits.listKits[kit].permission == null || Permission.HasPermission(player.UID, configKits.listKits[kit].permission))
             {
                 if (ProjectX.cacheKits.ContainsKey(player.UID)) {
                     if (ProjectX.cacheKits[player.UID].ContainsKey(kit)) {
 
                         if (ProjectX.cacheKits[player.UID][kit] < ProjectX.TimeSeconds())
                         {
-                            ProjectX.cacheKits[player.UID][kit] = ProjectX.TimeSeconds() + listKits[kit].cooldown;
-                            GiveKit(player, listKits[kit]);
+                            ProjectX.cacheKits[player.UID][kit] = ProjectX.TimeSeconds() + configKits.listKits[kit].cooldown;
+                            GiveKit(player, configKits.listKits[kit]);
                         }
                         else
                         {
@@ -65,44 +94,44 @@ namespace ProjectX.Plugins
 
                             if (cacheTimeUser > 60)
                             {
-                                player.MessageFrom(ProjectX.configServer.NameServer, string.Format(kitTimeCooldown, (cacheTimeUser/60).ToString() + "min", kit));
+                                player.MessageFrom(ProjectX.configServer.NameServer, string.Format(configKits.kitTimeCooldown, (cacheTimeUser/60).ToString() + "min", kit));
                             }
                             else
                             {
-                                player.MessageFrom(ProjectX.configServer.NameServer, string.Format(kitTimeCooldown, cacheTimeUser.ToString() + "s", kit));
+                                player.MessageFrom(ProjectX.configServer.NameServer, string.Format(configKits.kitTimeCooldown, cacheTimeUser.ToString() + "s", kit));
                             }
 
                         }
                     }
                     else
                     {
-                        ProjectX.cacheKits[player.UID].Add(kit, ProjectX.TimeSeconds() + listKits[kit].cooldown);
-                        GiveKit(player, listKits[kit]);
+                        ProjectX.cacheKits[player.UID].Add(kit, ProjectX.TimeSeconds() + configKits.listKits[kit].cooldown);
+                        GiveKit(player, configKits.listKits[kit]);
                     }
                 } else
                 {
                     Fougerite.SerializableDictionary<string, double> cacheTimeCheck = new Fougerite.SerializableDictionary<string, double>();
-                    cacheTimeCheck.Add(kit, ProjectX.TimeSeconds() + listKits[kit].cooldown);
+                    cacheTimeCheck.Add(kit, ProjectX.TimeSeconds() + configKits.listKits[kit].cooldown);
                     ProjectX.cacheKits.Add(player.UID, cacheTimeCheck);
-                    GiveKit(player, listKits[kit]);
+                    GiveKit(player, configKits.listKits[kit]);
                 }
 
             }
             else
             {
-                player.MessageFrom(ProjectX.configServer.NameServer, noAccess);
+                player.MessageFrom(ProjectX.configServer.NameServer, configKits.noAccess);
             }
         }
 
         // mykits
         public static void printYourKits(Fougerite.Player player)
         {
-            player.MessageFrom(ProjectX.configServer.NameServer, Kits.yourKits);
-            foreach (var kit in listKits)
+            player.MessageFrom(ProjectX.configServer.NameServer, configKits.yourKits);
+            foreach (var kit in configKits.listKits)
             {
-                if (!kit.Value.perm || Permission.HasPermission(player.UID, kit.Value.namePerm))
+                if (kit.Value.permission == null || Permission.HasPermission(player.UID, kit.Value.permission))
                 {
-                    player.MessageFrom(ProjectX.configServer.NameServer, string.Format(kitView, kit.Key, kit.Value.desc));
+                    player.MessageFrom(ProjectX.configServer.NameServer, string.Format(configKits.kitView, kit.Key, kit.Value.desc));
                 }
             }
         }
@@ -110,20 +139,28 @@ namespace ProjectX.Plugins
 
     public class PropKits
     {
-
-        public bool perm;
-        public string namePerm;
+        public string permission;
         public string desc;
         public float cooldown;
         public Dictionary<string, int> itens;
 
-        public PropKits(string _name, string _desc, float _cooldown, bool _perm, ProjectX.Ingrediente _itens)
+        public PropKits(string _name, float _cooldown, Dictionary<string, int> _itens)
         {
-            perm = _perm;
-            namePerm = _name;
-            desc = _desc;
+            if (_name != null) {
+                permission = _name;
+            }
+            
             cooldown = _cooldown;
-            itens = _itens.ingredientes;
+            itens = _itens;
+
+            string brev = _cooldown + "seg";
+
+            if (_cooldown >= 60)
+            {
+                brev = Math.Round(_cooldown / 60) + "min";
+            }
+
+            desc = string.Format(Kits.Config.timerIntervalKit, brev);
         }
 
     }
@@ -142,19 +179,19 @@ namespace ProjectX.Plugins
             }
             else if (ChatArguments.Length == 1)
             {
-                if (Kits.listKits.ContainsKey(ChatArguments[0]))
+                if (Kits.configKits.listKits.ContainsKey(ChatArguments[0]))
                 {
                     Kits.HasKit(cachePlayer, ChatArguments[0]);
                 }
                 else
                 {
-                    cachePlayer.MessageFrom(ProjectX.configServer.NameServer, Kits.unknownKit);
+                    cachePlayer.MessageFrom(ProjectX.configServer.NameServer, Kits.configKits.unknownKit);
                 }
             }
             else
             {
-                cachePlayer.MessageFrom(ProjectX.configServer.NameServer, Kits.kithelp);
-                cachePlayer.MessageFrom(ProjectX.configServer.NameServer, Kits.kithelp2);
+                cachePlayer.MessageFrom(ProjectX.configServer.NameServer, Kits.configKits.kithelp);
+                cachePlayer.MessageFrom(ProjectX.configServer.NameServer, Kits.configKits.kithelp2);
             }
 
         }

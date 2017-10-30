@@ -4,12 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+/// <summary>
+/// System Timer Easy - version 1.1
+/// * Timer Once
+/// * Timer Repeat
+/// </summary>
+
 namespace TimerEdit
 {
     public class TimerEditStart {
 
         //timer
-        private static GameObject LoadTime = new GameObject();
+        private static GameObject LoadTime;
 
         //active
         public static void Init() {
@@ -21,6 +27,7 @@ namespace TimerEdit
                 GameObject.Destroy(obj2);
             }
 
+            LoadTime = new GameObject();
             LoadTime.AddComponent<TimerEvento>();
             UnityEngine.Object.DontDestroyOnLoad(LoadTime);
         }
@@ -75,7 +82,15 @@ namespace TimerEdit
                         var time = listTimers.ElementAt(i);
                         if (time.Key < UnityEngine.Time.realtimeSinceStartup)
                         {
-                            time.Value.acao();
+                            try
+                            {
+                                time.Value.acao();
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.LogDebug("[TimerEvento] Error in active Action! " + ex);
+                            }
+                            
 
                             if (time.Value.repeat == -1)
                             {

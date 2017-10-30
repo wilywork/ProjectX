@@ -31,7 +31,9 @@ namespace ProjectX.Plugins
                 {
                     if (ge.Quantity > 0)
                     {
-                        ProjectX.AddItemInventory(player, ge.Item, ge.Quantity * gatherMulti[ge.Item]);
+                        if (ProjectX.displaynameToDataBlock.ContainsKey(ge.Item.ToLower())) {
+                            ProjectX.AddItemInventory(player, ProjectX.displaynameToDataBlock[ge.Item.ToLower()], ge.Quantity * gatherMulti[ge.Item]);
+                        }
                     }
                 }
             } else

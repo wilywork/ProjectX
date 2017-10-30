@@ -144,11 +144,11 @@ namespace ProjectX.Plugins
                     Destroyed(he.Entity);
                 }
 
-                foreach (KeyValuePair<string, int> ingredients in ResourcesItens.IngredientesItem[gameobjectname].ingredientes)
+                foreach (KeyValuePair<string, int> ingredients in ResourcesItens.IngredientesItem[gameobjectname])
                 {
                     if (displaynameToDataBlock.ContainsKey(ingredients.Key.ToLower()))
                     {                        
-                        ProjectX.AddItemInventory(Fougerite.Server.Cache[rplayer.playerclient.userID], displaynameToDataBlock[ingredients.Key].name, ingredients.Value);
+                        ProjectX.AddItemInventory(Fougerite.Server.Cache[rplayer.playerclient.userID], displaynameToDataBlock[ingredients.Key], ingredients.Value);
                     }
                 }
             }

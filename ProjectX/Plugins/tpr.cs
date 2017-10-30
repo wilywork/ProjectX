@@ -1,3 +1,4 @@
+using Fougerite;
 using System;
 using UnityEngine;
 
@@ -9,27 +10,28 @@ namespace ProjectX.Plugins
         public static float timeEspired = 15;
         public static float timeCooldown = 30;
         public static float timeTeleport = 4;
+        public static float distanceCheckDeploys = 35;
 
-        public static string playerNotFound = "Player não encontrado.";
-        public static string notFoundText = "Informe o nome do jogador.";
-        public static string teleportCancelled = "Teleporte cancelado!";
-        public static string cooldownTpr = "Você deve esperar [color #ffffff]{0}s[/color] antes de solicitar outro teletransporte.";
-        public static string playerInTpr = "O jogador alvo já tem um pedido pendente.";
-        public static string blockTprYourself = "Impossível teleportar para si mesmo.";
-        public static string blockTprInHome = "Você não pode aceitar tpr enquanto da home.";
-        public static string blockTprInHomeP = "Você não pode enviar tpr enquanto da home.";
-        public static string cancel = "Você recusou o pedido de telepordo do [color white]{0}[/color].";
-        public static string cancelAll = "Você cancelou todos os teletransportes atuais.";
-        public static string warnCancel = "{0} recusou seu pedido de teleporte.";
-        public static string sending = " Você enviou um pedido para [color white]{0}[/color].";
-        public static string warnStruture = "Afaste-se das construções!!";
-        public static string warnPlayerStruture = "{0} está muito perto das construções!!";
-        public static string notTpr = "Você não tem solicitação de tpr.";
-        public static string warnNewTpr = "Você recebeu um pedido de teletransporte {0}. [color white]/tpa[/color] para aceitar, [color white]/tpc[/color] para recusar.";
-        public static string warnTprExist = "Você já solicitou um teletransporte , você deve aguardar.";
-        public static string warnBlockTpr = "Você não tem permissão para usar tpr de onde você está.";
-        public static string warnBlockRock = "Parece que você está perto de uma árvore ou rocha, afaste-se!";
-        public static string warnBlockRockP = "Cancelado, seu amigo [color #ffffff]{0}[/color] está perto de uma árvore ou rocha!";
+        public static string playerNotFound = "[color yellow] Player não encontrado.";
+        public static string notFoundText = "[color yellow] Informe o nome do jogador.";
+        public static string teleportCancelled = "[color yellow] Teleporte cancelado!";
+        public static string cooldownTpr = "[color yellow] Você deve esperar [color #ffffff]{0}s[/color] antes de solicitar outro teletransporte.";
+        public static string playerInTpr = "[color yellow] O jogador alvo já tem um pedido pendente.";
+        public static string blockTprYourself = "[color yellow] Impossível teleportar para si mesmo.";
+        public static string blockTprInHome = "[color yellow] Você não pode aceitar tpr enquanto da home.";
+        public static string blockTprInHomeP = "[color yellow] Você não pode enviar tpr enquanto da home.";
+        public static string cancel = "[color red]Você recusou o pedido de telepordo do [color white]{0}[/color].";
+        public static string cancelAll = "[color green] Você cancelou todos os teletransportes atuais.";
+        public static string warnCancel = "{0}[color red] recusou seu pedido de teleporte.";
+        public static string sending = "[color green] Você enviou um pedido para [color white]{0}[/color].";
+        public static string warnStruture = "[color red] Afaste-se das construções!!";
+        public static string warnPlayerStruture = "{0} [color red]está muito perto das construções!!";
+        public static string notTpr = "[color yellow] Você não tem solicitação de tpr.";
+        public static string warnNewTpr = "[color green] Você recebeu um pedido de teletransporte {0}. [color white]/tpa[/color] para aceitar, [color white]/tpc[/color] para recusar.";
+        public static string warnTprExist = "[color yellow] Você já solicitou um teletransporte , você deve aguardar.";
+        public static string warnBlockTpr = "[color yellow] Você não tem permissão para usar tpr de onde você está.";
+        public static string warnBlockRock = "[color yellow]Parece que você está perto de uma árvore ou rocha, afaste-se!";
+        public static string warnBlockRockP = "[color yellow]Cancelado, seu amigo [color #ffffff]{0}[/color] está perto de uma árvore ou rocha!";
 
         private static Vector3 VectorDown = new Vector3(0f, -0.4f, 0f);
         private static RaycastHit cachedRaycast;
@@ -140,7 +142,7 @@ namespace ProjectX.Plugins
                     if (tpr.CheckRock(playerDestinaty.PlayerClient)) {
                         playerclient.MessageFrom(ProjectX.configServer.NameServer, string.Format(tpr.warnBlockRockP, playerDestinaty.Name));
                         playerDestinaty.MessageFrom(ProjectX.configServer.NameServer, tpr.warnBlockRock);
-                    } else if (tpr.CheckRadius(playerDestinaty.PlayerClient.lastKnownPosition, 20, false))
+                    } else if (tpr.CheckRadius(playerDestinaty.PlayerClient.lastKnownPosition, tpr.distanceCheckDeploys, false))
                     {
                         ProjectX.TeleportPlayer(playerclient.PlayerClient.netUser, playerDestinaty.PlayerClient.lastKnownPosition);
                         var cacheCooldown = playerclient.PlayerClient.gameObject.AddComponent<TPCooldown>();
@@ -260,7 +262,7 @@ namespace ProjectX.Plugins
                     var cacheTPCooldown = player.PlayerClient.GetComponent<TPCooldown>();
                     if (cacheTPCooldown != null) { player.MessageFrom(ProjectX.configServer.NameServer, string.Format( tpr.cooldownTpr, Convert.ToInt64(cacheTPCooldown.activeTime-Time.realtimeSinceStartup).ToString())); return; }
                     //valida se o player destino esta perto de construcao
-                    if (!tpr.CheckRadius(cachePlayer.PlayerClient.lastKnownPosition, 20, false)){
+                    if (!tpr.CheckRadius(cachePlayer.PlayerClient.lastKnownPosition, tpr.distanceCheckDeploys, false)){
                         player.MessageFrom(ProjectX.configServer.NameServer, string.Format(tpr.warnPlayerStruture, cachePlayer.Name));
                         return;
                     }
@@ -312,7 +314,7 @@ namespace ProjectX.Plugins
                 return;
             }
 
-            if (tpr.CheckRadius(player.PlayerClient.lastKnownPosition, 20, false))
+            if (tpr.CheckRadius(player.PlayerClient.lastKnownPosition, tpr.distanceCheckDeploys, false))
             {
                 var cacheTprR = cacheTprI.playerDestinaty.PlayerClient.GetComponent<TPRequest>();
                 cacheTprR.Active();
@@ -330,37 +332,61 @@ namespace ProjectX.Plugins
     {
         public static void Execute(ConsoleSystem.Arg Arguments, string[] ChatArguments)
         {
-            //valida se tem tpr, se tiver avisar o remetente
-            //limpar tpr's
-            Fougerite.Player player = Fougerite.Server.Cache[Arguments.argUser.userID];
-            var cacheTprI = player.PlayerClient.GetComponent<TPIncoming>();
-            if (cacheTprI != null)
+            try
             {
-                player.MessageFrom(ProjectX.configServer.NameServer, string.Format("[color red]Você recusou o pedido de telepordo do [color white]{0}[/color].", cacheTprI.playerDestinaty.Name));
-                cacheTprI.playerDestinaty.MessageFrom(ProjectX.configServer.NameServer, string.Format("{0}[color red] recusou seu pedido de teleporte.", player.Name));
+                //valida se tem tpr, se tiver avisar o remetente
+                //limpar tpr's
+                Fougerite.Player player = Fougerite.Server.Cache[Arguments.argUser.userID];
+                if (player != null && player.PlayerClient != null)
+                {
+                    try
+                    {
+                        var cacheTprI = player.PlayerClient.GetComponent<TPIncoming>();
+                        if (cacheTprI != null)
+                        {
+                            player.MessageFrom(ProjectX.configServer.NameServer, string.Format("[color red]Você recusou o pedido de telepordo do [color white]{0}[/color].", cacheTprI.playerDestinaty.Name));
+                            cacheTprI.playerDestinaty.MessageFrom(ProjectX.configServer.NameServer, string.Format("{0}[color red] recusou seu pedido de teleporte.", player.Name));
 
-                var cacheTprR = cacheTprI.playerDestinaty.PlayerClient.GetComponent<TPRequest>();
-                if (cacheTprR != null) {
-                    cacheTprR.OnDestroy();
+                            var cacheTprR = cacheTprI.playerDestinaty.PlayerClient.GetComponent<TPRequest>();
+                            if (cacheTprR != null)
+                            {
+                                cacheTprR.OnDestroy();
+                            }
+                            cacheTprI.OnDestroy();
+                            return;
+                        }
+
+                        var cacheTprR_ = player.PlayerClient.GetComponent<TPRequest>();
+                        if (cacheTprR_ != null)
+                        {
+                            if (cacheTprR_.playerDestinaty.PlayerClient != null)
+                            {
+                                var cacheTprI_ = cacheTprR_.playerDestinaty.PlayerClient.GetComponent<TPIncoming>();
+
+                                if (cacheTprI_ != null)
+                                {
+                                    cacheTprR_.playerDestinaty.MessageFrom(ProjectX.configServer.NameServer, tpr.teleportCancelled);
+                                    cacheTprI_.OnDestroy();
+                                }
+                            }
+
+                            cacheTprR_.OnDestroy();
+                        }
+
+                        player.MessageFrom(ProjectX.configServer.NameServer, "[color green] Você cancelou todos os teletransportes atuais.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogDebug("[Error] TpcCommand: " + ex);
+                    }
+
                 }
-                cacheTprI.OnDestroy();
-                return;
             }
-
-            var cacheTprR_ = player.PlayerClient.GetComponent<TPRequest>();
-            if (cacheTprR_ != null)
+            catch (Exception ex)
             {
-                var cacheTprI_ = cacheTprR_.playerDestinaty.PlayerClient.GetComponent<TPIncoming>();
-
-                if (cacheTprI_ != null) {
-                    cacheTprR_.playerDestinaty.MessageFrom(ProjectX.configServer.NameServer, tpr.teleportCancelled);
-                    cacheTprI_.OnDestroy();
-                }
-
-                cacheTprR_.OnDestroy();
+                Logger.LogDebug("[Error] TpcCommand 2: " + ex);
             }
-
-            player.MessageFrom(ProjectX.configServer.NameServer, "[color green] Você cancelou todos os teletransportes atuais.");
+   
         }
     }
 

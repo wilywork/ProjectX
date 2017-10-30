@@ -1,9 +1,9 @@
+using System;
+using System.Collections.Generic;
+
 namespace ProjectX.Plugins
 {
-    using System;
-    using System.Collections.Generic;
-
-    public class UnFriendCommand
+    class UnFriendCommand
     {
         public static void Execute(ConsoleSystem.Arg Arguments, string[] ChatArguments)
         {

@@ -54,8 +54,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\servidor RUST\rust_server_fougerite_155_buster\rust_server_Data\Managed\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\servidor RUST\rust_server_rustbuster\rust_server_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Facepunch.HitBox">
       <HintPath>..\..\..\servidor RUST\rust_server_fougerite_155_buster\rust_server_Data\Managed\Facepunch.HitBox.dll</HintPath>
@@ -99,6 +100,7 @@
     <Compile Include="extensoes\TimerEvento.cs" />
     <Compile Include="Plugins\airdrop.cs" />
     <Compile Include="Plugins\antiGlith.cs" />
+    <Compile Include="Plugins\buildConstructor.cs" />
     <Compile Include="Plugins\chat.cs" />
     <Compile Include="Plugins\clearSystem.cs" />
     <Compile Include="Plugins\commandsConsole.cs" />
@@ -109,12 +111,12 @@
     <Compile Include="Plugins\notices.cs" />
     <Compile Include="Plugins\owner.cs" />
     <Compile Include="Plugins\playerConnection.cs" />
+    <Compile Include="Plugins\showDamange.cs" />
     <Compile Include="Plugins\systemCommands.cs" />
     <Compile Include="Plugins\tpr.cs" />
     <Compile Include="Plugins\TprAdmin.cs" />
     <Compile Include="ProjectX.cs" />
     <Compile Include="Plugins\ajuda.cs" />
-    <Compile Include="Plugins\damange.cs" />
     <Compile Include="Plugins\fps.cs" />
     <Compile Include="Plugins\friends.cs" />
     <Compile Include="Plugins\infoPlayer.cs" />

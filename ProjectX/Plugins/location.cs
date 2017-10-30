@@ -1,9 +1,9 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
 namespace ProjectX.Plugins
 {
-    using System;
-    using System.Collections.Generic;
-    using UnityEngine;
-
     public class LocCommand
     {
         public static float nearest;

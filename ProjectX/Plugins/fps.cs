@@ -1,6 +1,6 @@
 namespace ProjectX.Plugins
 {
-    public class FpsOffCommand
+    class FpsOffCommand
     {
 
         public static void Execute(ConsoleSystem.Arg Arguments, string[] ChatArguments)

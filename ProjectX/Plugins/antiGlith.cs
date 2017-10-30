@@ -4,12 +4,50 @@ using UnityEngine;
 using Fougerite;
 using Fougerite.Events;
 using static ProjectX.ProjectX;
-using System.Threading;
 
 namespace ProjectX.Plugins
 {
-    public class antiGlith
+    public class AntiGlith
     {
+        public class Config
+        {
+            public bool restrictedMap;
+            public bool controlBuildLimit;
+            public int limitRamps;
+            public int heightAllowed;
+            public string warnHeightAllowed;
+            public int limitFoundations;
+            public string warnLimitFoundations;
+            public string warnNotAllow;
+            public string warnBuildRock;
+            public string warnNearSmall;
+            public string warnNearValeBear;
+            public string warnNearBuild;
+            public string warnNearHere;
+            public string warnTryBugRock;
+            public string warnNearPlayerBarricade;
+
+            public Config Default()
+            {
+                restrictedMap = true;
+                controlBuildLimit = true;
+                limitRamps = 2;
+                heightAllowed = 40;
+                warnHeightAllowed = "[color red]Está construção atingiu o limite máximo de altura.";
+                limitFoundations = 100;
+                warnLimitFoundations = "[color red]Está construção atingiu o limite máximo de {0} fundações.";
+                warnNotAllow = "[color red]Isto não é permitido!";
+                warnBuildRock = "[color red]Proibido construir dentro de uma rocha.";
+                warnNearSmall = "[color red]Perto da Small, será removido automaticamente pelo sistema em [color #ffffff] 60 Segundos[/color].";
+                warnNearValeBear = "[color red]Perto do Vale dos Ursos, será removido automaticamente pelo sistema em [color #ffffff] 60 Segundos[/color].";
+                warnNearBuild = "[color red]Perto da construção, será removido automaticamente pelo sistema em [color #ffffff] 60 Segundos[/color].";
+                warnNearHere = "[color red]Proibido construir aqui, será removido automaticamente pelo sistema em [color #ffffff] 60 Segundos[/color].";
+                warnTryBugRock = "[color red] Não tente mais bugar na rocha.";
+                warnNearPlayerBarricade = "[color red]A players muito perto da barricada.";
+                return this;
+            }
+        }
+
         private static Vector3 Vector3Down = new Vector3(0f, -1f, 0f);
         private static Vector3 Vector3Down2 = new Vector3(0f, -15f, 0f);
         private static Vector3 Vector3Up = new Vector3(0f, 1f, 0f);
@@ -23,14 +61,12 @@ namespace ProjectX.Plugins
         public static float cacheCalcPos;
         private static int terrainLayer = LayerMask.GetMask(new string[] { "Static", "Terrain" });
 
-        public static int limitRamps = 2;
+        public static Config configGlith = new Config();
 
-        public static int alturaPermitida = 40;
-        public static string warnLimitAltura = "[color red]Está construção atingiu o limite máximo de altura.";
-
-        public static int limiteFundacoes = 100;
-        public static string warnLimitFundacoes = "[color red]Está construção atingiu o limite máximo de {0} fundações.";
-
+        public static void Start()
+        {
+            configGlith = ProjectX.ReadyConfigChecked<Config>(configGlith.Default(), "config/antiGlith.json");
+        }
 
         //valida os objectos adicionados no mapa pelo usuario
         public static void EntityDeployed(Fougerite.Player Player, Fougerite.Entity Entity, Fougerite.Player actualplacer) {
@@ -78,9 +114,12 @@ namespace ProjectX.Plugins
                                     l.name.ToLower().Contains("woodbox") || l.name.ToLower().Contains("smallstash") ||
                                     (l.name.ToLower().Contains("door") && !isdoor)))
                         {
-                            TimerEdit.TimerEvento.Once(1, () => {
-                                Destroyed(Entity);
-                            });
+                            try {
+                                Entity.Destroy();
+                            } catch (Exception ex) {
+                                try { Logger.LogDebug("[Error] Entity.Destroy name 1 " + Entity.Name); } catch { }
+                                Logger.LogDebug("[GlitchFix] Entity.Destroy 1 Error " + ex);
+                            }
                             giveItemRemove(name, actualplacer, 1);
                             return;
                         }
@@ -107,11 +146,15 @@ namespace ProjectX.Plugins
                                     {
                                         ramps += weight[cachedComponent].Count(structure => structure.type == StructureComponent.StructureComponentType.Ramp);
                                     }
-                                    if (ramps > limitRamps)
+                                    if (ramps > configGlith.limitRamps)
                                     {
-                                        TimerEdit.TimerEvento.Once(2, () => {
-                                            Destroyed(Entity);
-                                        });
+                                        try {
+                                            Entity.Destroy();
+                                        } catch (Exception ex)
+                                        {
+                                            try { Logger.LogDebug("[Error] Entity.Destroy name 2 " + Entity.Name); } catch { }
+                                            Logger.LogDebug("[GlitchFix] Entity.Destroy 2 Error " + ex);
+                                        }
                                         giveItemRemove(Entity.Name, actualplacer, 1);
                                         return;
                                     }
@@ -122,11 +165,17 @@ namespace ProjectX.Plugins
 
                     //valida se o objecto esta dentro de uma rocha
                     if (Player != null && IsIntoRock(Entity.Location)) {
-                        giveItemRemove(Entity.Name, actualplacer, 1, "[color red]Proibido construir dentro de uma rocha.");
-                        TimerEdit.TimerEvento.Once(1, () => {
-                            Destroyed(Entity);
-                        });
+                        giveItemRemove(Entity.Name, actualplacer, 1, configGlith.warnBuildRock);
+                        try {
+                            Entity.Destroy();
+                        }
+                        catch (Exception ex)
+                        {
+                            try { Logger.LogDebug("[Error] Entity.Destroy name 3 " + Entity.Name); } catch { }
+                            Logger.LogDebug("[GlitchFix] Entity.Destroy 3 Error " + ex);
+                        }
                         TeleportPlayerOutRock(Player);
+                        return;
                     }
 
                     //valida se ha barricada em baixo do pilar
@@ -134,10 +183,16 @@ namespace ProjectX.Plugins
                     {
                         if (Physics.OverlapSphere(Entity.Location, 0.34f).Where(collider => collider.GetComponent<DeployableObject>() != null).Any(collider => collider.GetComponent<DeployableObject>().name.Contains("Barricade_Fence")))
                         {
-                            TimerEdit.TimerEvento.Once(2, () => {
-                                Destroyed(Entity);
-                            });
-                            giveItemRemove(Entity.Name, actualplacer, 1, "[color red]Isto não é permitido!");
+                            try {
+                                Entity.Destroy();
+                            }
+                            catch (Exception ex)
+                            {
+                                try { Logger.LogDebug("[Error] Entity.Destroy name 4 " + Entity.Name); } catch { }
+                                Logger.LogDebug("[GlitchFix] Entity.Destroy 4 Error " + ex);
+                            }
+                            giveItemRemove(Entity.Name, actualplacer, 1, configGlith.warnNotAllow);
+                            return;
                         }
                     }
 
@@ -152,20 +207,23 @@ namespace ProjectX.Plugins
                     }
 
                     //valida se este objecto foi construindo em area proibida
-                    if(RestrictMap(Entity, Player)){
+                    if(configGlith.restrictedMap && RestrictMap(Entity, Player)){
                         return;
                     }
-                    
 
                     //valida limite de construcoes
-                    try
-                    {
-                        new Thread(new ParameterizedThreadStart(buildRestricao)).Start(new parametrosBuild(actualplacer, Entity));
+                    if (configGlith.controlBuildLimit) {
+                        buildRestricao(actualplacer, Entity);
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.Log("Error Thread:" + ex);
-                    }
+                    
+                    //try
+                    //{
+                    //    new Thread(new ParameterizedThreadStart(buildRestricao)).Start(new parametrosBuild(actualplacer, Entity));
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    Debug.Log("Error Thread:" + ex);
+                    //}
 
                 }
             }
@@ -174,7 +232,6 @@ namespace ProjectX.Plugins
                 Logger.LogDebug("[GlitchFix] Some error showed up error 0. Report this. " + ex);
             }
         }
-        
         
         //valida objetos debaixo de construcoes
         public static bool CheckObjectInBuilds(Entity _Entity, Fougerite.Player _Player){
@@ -194,10 +251,15 @@ namespace ProjectX.Plugins
                                     cacheCalcPos = _Entity.Location.y - cachedhitInstance.physicalColliderReferenceOnly.gameObject.transform.position.y;
                                     if (cacheCalcPos < 3.9f)
                                     {
-                                        giveItemRemove(_Entity.Name, _Player, 1, "[color red]Isso é proibido.");
-                                        TimerEdit.TimerEvento.Once(2, () => {
-                                            Destroyed(_Entity);
-                                        });
+                                        giveItemRemove(_Entity.Name, _Player, 1, configGlith.warnNotAllow);
+                                        try {
+                                            _Entity.Destroy();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            try { Logger.LogDebug("[Error] Entity.Destroy name 5 " + _Entity.Name); } catch { }
+                                            Logger.LogDebug("[GlitchFix] Entity.Destroy 5 Error " + ex);
+                                        }
                                         return true;
                                     }
                                 }
@@ -223,8 +285,15 @@ namespace ProjectX.Plugins
                     {
                         if (collider != null && collider.gameObject != null && collider.gameObject.name.IndexOf("Player") != -1)
                         {
-                            _Player.MessageFrom(ProjectX.configServer.NameServer, "[color red]A players muito perto da barricada.");
-                            Destroyed(_Entity);
+                            _Player.MessageFrom(ProjectX.configServer.NameServer, configGlith.warnNearPlayerBarricade);
+                            try {
+                                _Entity.Destroy();
+                            }
+                            catch (Exception ex)
+                            {
+                                try { Logger.LogDebug("[Error] Entity.Destroy name 6 " + _Entity.Name); } catch { }
+                                Logger.LogDebug("[GlitchFix] Entity.Destroy 6 Error " + ex);
+                            }
                             return true;
                         }
                     }
@@ -257,23 +326,24 @@ namespace ProjectX.Plugins
         
         //valida se o objecto foi construindo em area proibida
         public static bool RestrictMap(Entity _Entity, Fougerite.Player _Player){
-            int cache_x = Convert.ToInt32(_Entity.Location.x);
-            int cache_z = Convert.ToInt32(_Entity.Location.z);
-
             try
             {
+
+                int cache_x = Convert.ToInt32(_Entity.Location.x);
+                int cache_z = Convert.ToInt32(_Entity.Location.z);
+
                 bool destroyItem = false;
-                if (_Player == null || !_Player.Admin)
+                if (_Player != null && !_Player.Admin)
                 {
 
                     if (cache_x <= 6490 && cache_x >= 5660 && cache_z >= -3920 && cache_z <= -3090)
                     {
-                        _Player.MessageFrom(ProjectX.configServer.NameServer, "[color red]Perto da Small, será removido automaticamente pelo sistema em [color #ffffff] 60 Segundos[/color].");
+                        _Player.MessageFrom(ProjectX.configServer.NameServer, configGlith.warnNearSmall);
                         destroyItem = true;
                     }
                     else if (cache_x <= 5192 && cache_x >= 4430 && cache_z >= -4141 && cache_z <= -3623)
                     {
-                        _Player.MessageFrom(ProjectX.configServer.NameServer, "[color red]Perto do Vale dos Ursos, será removido automaticamente pelo sistema em [color #ffffff] 60 Segundos[/color].");
+                        _Player.MessageFrom(ProjectX.configServer.NameServer, configGlith.warnNearValeBear);
                         destroyItem = true;
                         //casinhas e celeiro
                     }
@@ -285,7 +355,7 @@ namespace ProjectX.Plugins
                       (cache_x <= 5716 && cache_x >= 5694 && cache_z >= -4254 && cache_z <= -4233) ||
                       (cache_x <= 6624 && cache_x >= 6604 && cache_z >= -3388 && cache_z <= -3407))
                     {
-                        _Player.MessageFrom(ProjectX.configServer.NameServer, "[color red]Perto da casa, será removido automaticamente pelo sistema em [color #ffffff] 60 Segundos[/color].");
+                        _Player.MessageFrom(ProjectX.configServer.NameServer, configGlith.warnNearBuild);
                         destroyItem = true;
                         //galpoes
                     }
@@ -294,7 +364,7 @@ namespace ProjectX.Plugins
                           (cache_x <= 6448 && cache_x >= 6378 && cache_z >= -3955 && cache_z <= -3834) ||
                           (cache_x <= 6780 && cache_x >= 6607 && cache_z >= -4427 && cache_z <= -4094))
                     {
-                        _Player.MessageFrom(ProjectX.configServer.NameServer, "[color red]Proibido construir aqui, será removido automaticamente pelo sistema em [color #ffffff] 60 Segundos[/color].");
+                        _Player.MessageFrom(ProjectX.configServer.NameServer, configGlith.warnNearHere);
                         destroyItem = true;
                     }
 
@@ -304,7 +374,7 @@ namespace ProjectX.Plugins
                         RemoveTime objetoRemover = null;
                         if (_Entity.IsDeployableObject())
                         {
-                            DeployableObject deploy = (DeployableObject)_Entity.Object;
+                            DeployableObject deploy = _Entity.GetObject<DeployableObject>();
                             if (deploy != null && deploy.gameObject != null)
                             {
                                 objetoRemover = deploy.gameObject.AddComponent<RemoveTime>();
@@ -312,15 +382,20 @@ namespace ProjectX.Plugins
                             }
                             else
                             {
-                                TimerEdit.TimerEvento.Once(2, () => {
-                                    Destroyed(_Entity);
-                                });
+                                try {
+                                    _Entity.Destroy();
+                                }
+                                catch (Exception ex)
+                                {
+                                    try { Logger.LogDebug("[Error] Entity.Destroy name 7 " + _Entity.Name); } catch { }
+                                    Logger.LogDebug("[GlitchFix] Entity.Destroy 7 Error " + ex);
+                                }
                                 Logger.LogDebug("[Error] GlithFIX ================== falta deploy.gameObject");
                             }
                         }
                         else if (_Entity.IsStructure())
                         {
-                            StructureComponent struture = (StructureComponent)_Entity.Object;
+                            StructureComponent struture = _Entity.GetObject<StructureComponent>();
                             if (struture != null && struture.gameObject != null)
                             {
                                 objetoRemover = struture.gameObject.AddComponent<RemoveTime>();
@@ -328,9 +403,14 @@ namespace ProjectX.Plugins
                             }
                             else
                             {
-                                TimerEdit.TimerEvento.Once(2, () => {
-                                    Destroyed(_Entity);
-                                });
+                                try {
+                                    _Entity.Destroy();
+                                }
+                                catch (Exception ex)
+                                {
+                                    try { Logger.LogDebug("[Error] Entity.Destroy name 8 " + _Entity.Name); } catch { }
+                                    Logger.LogDebug("[GlitchFix] Entity.Destroy 8 Error " + ex);
+                                }
                                 Logger.LogDebug("[Error] GlithFIX ================== falta struture.gameObject");
                             }
                         }
@@ -343,10 +423,15 @@ namespace ProjectX.Plugins
                     }
                     else if (_Player != null && _Player.PlayerClient != null && _Player.PlayerClient.lastKnownPosition != null && IsIntoRock(_Player.PlayerClient.lastKnownPosition))
                     {
-                        _Player.MessageFrom(ProjectX.configServer.NameServer, "[color red]Proibido construir dentro de uma rocha.");
-                        TimerEdit.TimerEvento.Once(2, () => {
-                            Destroyed(_Entity);
-                        });
+                        _Player.MessageFrom(ProjectX.configServer.NameServer, configGlith.warnBuildRock);
+                        try {
+                            _Entity.Destroy();
+                        }
+                        catch (Exception ex)
+                        {
+                            try { Logger.LogDebug("[Error] Entity.Destroy name 9 " + _Entity.Name); } catch { }
+                            Logger.LogDebug("[GlitchFix] Entity.Destroy 9 Error " + ex);
+                        }
                         TeleportPlayerOutRock(_Player);
                         return true;
                     }
@@ -381,11 +466,10 @@ namespace ProjectX.Plugins
             if (cachedRaycast.collider.gameObject.name != "") return;
             if (cachedRaycast.point.y < player.Y) return;
             Logger.LogDebug(player.Name + " tried to rock glitch at " + player.Location);
-            player.MessageFrom(ProjectX.configServer.NameServer, "[color red] Não tente mais bugar na rocha.");
+            player.MessageFrom(ProjectX.configServer.NameServer, configGlith.warnTryBugRock);
             TeleportPlayerOutRock(player);
 
         }
-
 
         // teleporta o player para fora da rocha
         public static void TeleportPlayerOutRock(Fougerite.Player netuser) {
@@ -409,10 +493,11 @@ namespace ProjectX.Plugins
         }
 
         //valida limite das construcoes
-        public static void buildRestricao(object props) {
+        //public static void buildRestricao(object props) {
+        public static void buildRestricao(Fougerite.Player actualplacer, Fougerite.Entity Entity) {
 
-            Fougerite.Player actualplacer = (Fougerite.Player)props.GetProperty("actualplacer");
-            Fougerite.Entity Entity = (Entity)props.GetProperty("Entity");
+            //Fougerite.Player actualplacer = (Fougerite.Player)props.GetProperty("actualplacer");
+            //Fougerite.Entity Entity = (Entity)props.GetProperty("Entity");
 
             int cache_x = Convert.ToInt32(Entity.Location.x);
             int cache_z = Convert.ToInt32(Entity.Location.z);
@@ -422,20 +507,20 @@ namespace ProjectX.Plugins
             {
                 if (Entity.Name.IndexOf("Pillar") != -1)
                 {
-                    ajustVar = alturaPermitida - 20;
+                    ajustVar = configGlith.heightAllowed - 20;
                 } else
                 {
-                    ajustVar = limiteFundacoes - 75;
+                    ajustVar = configGlith.limitFoundations - 75;
                 }
             } else
             {
                 if (Entity.Name.IndexOf("Pillar") != -1)
                 {
-                    ajustVar = alturaPermitida;
+                    ajustVar = configGlith.heightAllowed;
                 }
                 else
                 {
-                    ajustVar = limiteFundacoes;
+                    ajustVar = configGlith.limitFoundations;
                 }
             }
 
@@ -446,10 +531,14 @@ namespace ProjectX.Plugins
                     if (item.Name == "WoodFoundation" || item.Name == "MetalFoundation") {
                         if (ajustVar < Entity.Y - item.Y)
                         {
-                            TimerEdit.TimerEvento.Once(2, () => {
-                                Destroyed(Entity);
-                            });
-                            giveItemRemove(Entity.Name, actualplacer, 1, warnLimitAltura);
+                            try {
+                                Entity.Destroy();
+                            } catch (Exception ex)
+                            {
+                                try { Logger.LogDebug("[Error] Entity.Destroy name 10 " + Entity.Name); } catch { }
+                                Logger.LogDebug("[GlitchFix] Entity.Destroy 10 Error " + ex);
+                            }
+                        giveItemRemove(Entity.Name, actualplacer, 1, configGlith.warnHeightAllowed);
                         }
                         break;
                     }
@@ -463,10 +552,15 @@ namespace ProjectX.Plugins
                     {
                         if(countFundation >= ajustVar)
                         {
-                            TimerEdit.TimerEvento.Once(2, () => {
-                                Destroyed(Entity);
-                            });
-                            giveItemRemove(Entity.Name, actualplacer, 1, string.Format(warnLimitFundacoes, ajustVar));
+                            try {
+                                Entity.Destroy();
+                            }
+                            catch (Exception ex)
+                            {
+                                try { Logger.LogDebug("[Error] Entity.Destroy name 11 " + Entity.Name); } catch { }
+                                Logger.LogDebug("[GlitchFix] Entity.Destroy 11 Error " + ex);
+                            }
+                            giveItemRemove(Entity.Name, actualplacer, 1, string.Format(configGlith.warnLimitFoundations, ajustVar));
                             break;
                         } else
                         {
@@ -482,12 +576,17 @@ namespace ProjectX.Plugins
                 {
                     if (item.Name == "MetalFoundation")
                     {
-                        if (countFundation >= limiteFundacoes)
+                        if (countFundation >= configGlith.limitFoundations)
                         {
-                            TimerEdit.TimerEvento.Once(2, () => {
-                                Destroyed(Entity);
-                            });
-                            giveItemRemove(Entity.Name, actualplacer, 1, string.Format(warnLimitFundacoes, ajustVar));
+                            try {
+                                Entity.Destroy();
+                            }
+                            catch (Exception ex)
+                            {
+                                try { Logger.LogDebug("[Error] Entity.Destroy name 12 " + Entity.Name); } catch { }
+                                Logger.LogDebug("[GlitchFix] Entity.Destroy 12 Error " + ex);
+                            }
+                            giveItemRemove(Entity.Name, actualplacer, 1, string.Format(configGlith.warnLimitFoundations, ajustVar));
                             break;
                         }
                         else
@@ -501,29 +600,77 @@ namespace ProjectX.Plugins
 
         //giva o item removido
         public static void giveItemRemove(string name, Fougerite.Player actualplacer, int qtd, string message = null) {
+
             if (actualplacer != null && actualplacer.IsOnline)
             {
-                if (ResourcesItens.IngredientesItem.ContainsKey(name))
+                if (name != null)
                 {
-                    ProjectX.AddItemInventory(actualplacer, ResourcesItens.IngredientesItem[name].item, 1);
-                    if (message != null)
+                    try
                     {
-                        actualplacer.MessageFrom(ProjectX.configServer.NameServer, message);
+                        switch (name)
+                        {
+                            case "WoodFoundation":
+                                name = "wood foundation";
+                                break;
+                            case "MetalFoundation":
+                                name = "metal foundation";
+                                break;
+                            case "WoodRamp":
+                                name = "wood ramp";
+                                break;
+                            case "MetalRamp":
+                                name = "metal ramp";
+                                break;
+                            case "WoodPillar":
+                                name = "wood pillar";
+                                break;
+                            case "MetalPillar":
+                                name = "metal pillar";
+                                break;
+                            case "WoodDoor":
+                                name = "wood door";
+                                break;
+                            case "MetalDoor":
+                                name = "metal door";
+                                break;
+                            case "WoodBoxLarge":
+                                name = "woodbox large";
+                                break;
+                            default:
+                                name = name.ToLower();
+                                break;
+                        }
+
+                        if (name != null && displaynameToDataBlock.ContainsKey(name))
+                        {
+                            ProjectX.AddItemInventory(actualplacer, displaynameToDataBlock[name], 1);
+                            if (message != null)
+                            {
+                                actualplacer.MessageFrom(ProjectX.configServer.NameServer, message);
+                            }
+                        } else
+                        {
+                            Logger.LogDebug("[Error] antiglith giveItemRemove item not find: " + name);
+                        }
                     }
-                } else
+                    catch (Exception ex)
+                    {
+                        Logger.LogDebug("[Error] antiglith giveItemRemove : " + ex);
+                    }
+                }
+                else
                 {
-                    Logger.LogDebug("[Error] antiglith giveItemRemove: " + name);
+                    Logger.LogDebug("[Error] antiglith giveItemRemove 2: " + message);
                 }
             }
         }
         
-        
         //Objeto com os parametros necessarios para validar limites em segundo plano
-        public class parametrosBuild {
+        public class ParametrosBuild {
             public Fougerite.Player actualplacer;
             public Fougerite.Entity Entity;
 
-            public parametrosBuild(Fougerite.Player player, Fougerite.Entity item)
+            public ParametrosBuild(Fougerite.Player player, Fougerite.Entity item)
             {
                 actualplacer = player;
                 Entity = item;
@@ -543,10 +690,24 @@ namespace ProjectX.Plugins
                     {
                         foreach (var item in componentEntity.GetLinkedStructs())
                         {
-                            Destroyed(item);
+                            try {
+                                item.Destroy();
+                            }
+                            catch (Exception ex)
+                            {
+                                try { Logger.LogDebug("[Error] Entity.Destroy name 13 " + item.Name); } catch { }
+                                Logger.LogDebug("[GlitchFix] Entity.Destroy 13 Error " + ex);
+                            }
                         }
                     }
-                    Destroyed(componentEntity);
+                    try {
+                        componentEntity.Destroy();
+                    }
+                    catch (Exception ex)
+                    {
+                        try { Logger.LogDebug("[Error] Entity.Destroy name 14 " + componentEntity.Name); } catch { }
+                        Logger.LogDebug("[GlitchFix] Entity.Destroy 14 Error " + ex);
+                    }
                     Destroy(this);
                 }
             }

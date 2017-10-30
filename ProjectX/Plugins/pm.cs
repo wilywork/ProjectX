@@ -1,8 +1,8 @@
+using System.Linq;
+using System.Collections.Generic;
+
 namespace ProjectX.Plugins
 {
-    using System.Linq;
-    using System.Collections.Generic;
-
     public class PmCommand
     {
         static string teal = "[color #ff00f5]";

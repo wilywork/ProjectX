@@ -28,7 +28,7 @@ namespace ProjectX.Plugins
             public Config Defaut()
             {
                 tags = new Dictionary<string, Tag>() {
-                    { "admin", new Tag("[admin] ","[color red]") }
+                    { "admin", new Tag("[Admin] ","[color red]") }
                 };
                 blockChat = new List<object>() { "lix", "caralh", "pu.t", "pu,t", "ho da p", "mae ", " mae", "li.x", "caralho", "skyrust", "servegame.com", "28015", "net.connect", "uranium", "abor.to", "abor-to", "resto de ab", "aborto", "fo.da", "da.se", "se fud", "cù", "c u", "cú", " cu", "seu cu", "fode", "siririca", "por4", "l.i.x.o", "pora", "buceta", "penis", "porra", "f d p", "fd.p", "li.xo", "mãe", "fdm", "f d m", "f-d-m", "f-d-p", "cabacinho", "cabaçinho", "fodase", "foda-se", "[color", "merda", "puta", "fdp", "c*", "vagabundo", "merdinha", "merd", "tifode", "vsf", "lixo", "abuser", "abuse", "filhodaputa", "bosta", "c.u", "m.e.r.d.a" };
                 timerMuteSeconds = 300;

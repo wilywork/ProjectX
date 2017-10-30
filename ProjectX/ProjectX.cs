@@ -11,31 +11,15 @@ using TimerEdit;
 
 namespace ProjectX
 {
-    public class ProjectX : Fougerite.Module
+    public class ProjectX
     {
-        public override string Name
-        {
-            get { return "ProjectX"; }
-        }
-        public override string Author
-        {
-            get { return "WilyWork"; }
-        }
-        public override string Description
-        {
-            get { return "ProjectX ToolsPlugins"; }
-        }
-        public override Version Version
-        {
-            get { return new Version("1.3.9"); }
-        }
         //====================== Variaveis default ========================
         //used in teleport
         public static RustServerManagement management;
 
         public static string ConfigsFolder;
         //create folds defaults
-        public static List<string> DefualtFolders = new List<string>() { "config","data" };
+        public static List<string> DefualtFolders = new List<string>() { "config", "data" };
         //itens do jogo
         public static Dictionary<string, ItemDataBlock> displaynameToDataBlock = new Dictionary<string, ItemDataBlock>();
         //mutes
@@ -69,7 +53,7 @@ namespace ProjectX
 
             public Config Default()
             {
-                NameServer = "Death Of Rust";
+                NameServer = "Server";
                 WarnNotPermission = "[color red]Você não tem permissão para usar este comando.";
                 WarnInvalidCommand = "[color yellow] Este Comando não existe.";
                 InventoryFull = "Inventário cheio!";
@@ -88,7 +72,7 @@ namespace ProjectX
 
         public static double TimeSeconds()
         {
-            return System.DateTime.UtcNow.Subtract(epoch).TotalSeconds;
+            return System.DateTime.UtcNow.Subtract(ProjectX.epoch).TotalSeconds;
         }
 
         public static DateTime DataAtual()
@@ -129,19 +113,19 @@ namespace ProjectX
         {
             if (player == null || player.playerClient == null)
                 return;
-            if (management == null)
+            if (ProjectX.management == null)
             {
-                management = RustServerManagement.Get();
+                ProjectX.management = RustServerManagement.Get();
             }
 
             BreakLegs(player.playerClient);
 
-            management.TeleportPlayerToWorld(player.playerClient.netPlayer, pos);
+            ProjectX.management.TeleportPlayerToWorld(player.playerClient.netPlayer, pos);
 
             TimerEdit.TimerEvento.Once(2, () => {
                 if (player != null && player.playerClient != null)
                 {
-                    management.TeleportPlayerToWorld(player.playerClient.netPlayer, pos);
+                    ProjectX.management.TeleportPlayerToWorld(player.playerClient.netPlayer, pos);
                 }
             });
 
@@ -196,7 +180,7 @@ namespace ProjectX
 
         public static string GetAbsoluteFilePath(string fileName)
         {
-            return Path.Combine(ConfigsFolder, fileName);
+            return Path.Combine(ProjectX.ConfigsFolder, fileName);
         }
 
         public static T ReadyConfigChecked<T>(T obj, string pathFile)
@@ -225,85 +209,252 @@ namespace ProjectX
 
             foreach (string folder in folders)
             {
-                if (!Directory.Exists(ProjectX.GetAbsoluteFilePath(folder)))
+                if (!Directory.Exists(GetAbsoluteFilePath(folder)))
                 {
-                    Directory.CreateDirectory(ProjectX.GetAbsoluteFilePath(folder));
+                    Directory.CreateDirectory(GetAbsoluteFilePath(folder));
                 }
             }
 
         }
 
-        public static void AddItemInventory(Fougerite.Player player, string item, int qtd) {
-            if (player.Inventory.InternalInventory.occupiedSlotCount == 36)
+        public static void AddItemInventory(Fougerite.Player player, ItemDataBlock item, int qtd)
+        {
+            if (player != null && player.PlayerClient != null && player.PlayerClient.rootControllable != null)
             {
-                SendPopup(player.PlayerClient.netUser, "5", "☢", configServer.InventoryFull);
+
+                Inventory inv = player.PlayerClient.rootControllable.idMain.GetComponent<Inventory>();
+                if (inv != null)
+                {
+                    if (inv.occupiedSlotCount == 36)
+                    {
+                        SendPopup(player.PlayerClient.netUser, "5", "☢", configServer.InventoryFull);
+                    }
+                    else
+                    {
+                        inv.AddItemAmount(item, qtd);
+                        player.InventoryNotice(qtd + " x " + item.name);
+                    }
+                }
             }
-            else
+        }
+
+        //============================ Classes ==================================
+
+        public class StoragePlayer : MonoBehaviour
+        {
+            public string oldUserPm;
+            public bool showDamange = true;
+        }
+
+        public class ResourcesItens
+        {
+            public static Dictionary<string, Dictionary<string, int>> IngredientesItem;
+
+            public static void Init()
             {
-                player.Inventory.AddItem(item, qtd);
-                player.InventoryNotice(qtd + " x " + item);
+                if(IngredientesItem == null)
+                {
+                    IngredientesItem = new Dictionary<string, Dictionary<string, int>>();
+                    IngredientesItem.Add("Bed", new Dictionary<string, int>() { { "cloth", 40 }, { "metal fragments", 100 } });
+                    IngredientesItem.Add("Camp Fire", new Dictionary<string, int>() { { "wood", 5 } });
+                    IngredientesItem.Add("Furnace", new Dictionary<string, int>() { { "stones", 15 }, { "wood", 20 }, { "low grade fuel", 10 } });
+                    IngredientesItem.Add("LargeSpikeWall", new Dictionary<string, int>() { { "wood", 200 } });
+                    IngredientesItem.Add("LargeWoodStorage", new Dictionary<string, int>() { { "wood", 60 } });
+                    IngredientesItem.Add("MetalCeiling", new Dictionary<string, int>() { { "low quality metal", 6 } });
+                    IngredientesItem.Add("MetalDoor", new Dictionary<string, int>() { { "metal fragments", 200 } });
+                    IngredientesItem.Add("MetalDoorFrame", new Dictionary<string, int>() { { "low quality metal", 4 } });
+                    IngredientesItem.Add("MetalFoundation", new Dictionary<string, int>() { { "low quality metal", 8 } });
+                    IngredientesItem.Add("MetalPillar", new Dictionary<string, int>() { { "low quality metal", 2 } });
+                    IngredientesItem.Add("MetalRamp", new Dictionary<string, int>() { { "low quality metal", 5 } });
+                    IngredientesItem.Add("MetalStairs", new Dictionary<string, int>() { { "low quality metal", 5 } });
+                    IngredientesItem.Add("MetalWall", new Dictionary<string, int>() { { "low quality metal", 4 } });
+                    IngredientesItem.Add("MetalWindowFrame", new Dictionary<string, int>() { { "low quality metal", 4 } });
+                    //IngredientesItem.Add("MetalWindowBars", new Dictionary<string, int>() { { "stones",1} });
+                    IngredientesItem.Add("Repair Bench", new Dictionary<string, int>() { { "stones", 12 }, { "wood", 60 }, { "metal fragments", 50 }, { "low grade fuel", 6 } });
+                    IngredientesItem.Add("Sleeping Bag", new Dictionary<string, int>() { { "cloth", 15 } });
+                    IngredientesItem.Add("Small Stash", new Dictionary<string, int>() { { "leather", 10 } });
+                    IngredientesItem.Add("Spike Wall", new Dictionary<string, int>() { { "wood", 100 } });
+                    IngredientesItem.Add("WoodBarricade", new Dictionary<string, int>() { { "wood", 30 } });
+                    IngredientesItem.Add("Wood Barricade", new Dictionary<string, int>() { { "wood", 30 } });
+                    IngredientesItem.Add("WoodCeiling", new Dictionary<string, int>() { { "wood planks", 6 } });
+                    IngredientesItem.Add("WoodDoorFrame", new Dictionary<string, int>() { { "wood planks", 4 } });
+                    IngredientesItem.Add("WoodenDoorFrame", new Dictionary<string, int>() { { "wood", 30 } });
+                    IngredientesItem.Add("WoodenDoor", new Dictionary<string, int>() { { "wood", 30 } });
+                    IngredientesItem.Add("WoodFoundation", new Dictionary<string, int>() { { "wood planks", 8 } });
+                    IngredientesItem.Add("WoodGate", new Dictionary<string, int>() { { "wood", 120 } });
+                    IngredientesItem.Add("WoodGateway", new Dictionary<string, int>() { { "wood", 400 } });
+                    IngredientesItem.Add("WoodPillar", new Dictionary<string, int>() { { "wood planks", 2 } });
+                    IngredientesItem.Add("WoodRamp", new Dictionary<string, int>() { { "wood planks", 5 } });
+                    IngredientesItem.Add("WoodShelter", new Dictionary<string, int>() { { "wood", 50 } });
+                    IngredientesItem.Add("WoodStairs", new Dictionary<string, int>() { { "wood planks", 5 } });
+                    IngredientesItem.Add("WoodStorageBox", new Dictionary<string, int>() { { "wood", 30 } });
+                    IngredientesItem.Add("WoodWall", new Dictionary<string, int>() { { "wood planks", 4 } });
+                    IngredientesItem.Add("WoodWindowFrame", new Dictionary<string, int>() { { "wood planks", 4 } });
+                    IngredientesItem.Add("Workbench", new Dictionary<string, int>() { { "stones", 8 }, { "wood", 50 } });
+                    IngredientesItem.Add("WoodBox", new Dictionary<string, int>() { { "wood", 30 } });
+                    IngredientesItem.Add("WoodBoxLarge", new Dictionary<string, int>() { { "wood", 60 } });
+                    IngredientesItem.Add("LargeWoodSpikeWall", new Dictionary<string, int>() { { "wood", 200 } });
+                    IngredientesItem.Add("WoodSpikeWall", new Dictionary<string, int>() { { "wood", 100 } });
+                }
             }
+        }
+
+        //=======================================================================
+
+        //========================== ready e save files =========================
+
+        public static void ReadyFile()
+        {
+            ProjectX.friendList = ProjectX.ReadyConfigChecked<Dictionary<ulong, List<string>>>(ProjectX.friendList, "data/friendList.json");
+            ProjectX.shareList = ProjectX.ReadyConfigChecked<Dictionary<ulong, List<string>>>(ProjectX.shareList, "data/shareList.json");
+            ProjectX.permList = ProjectX.ReadyConfigChecked<Dictionary<ulong, List<string>>>(ProjectX.permList, "data/permList.json");
+            ProjectX.homeList = ProjectX.ReadyConfigChecked<Dictionary<ulong, Dictionary<string, string>>>(ProjectX.homeList, "data/homeList.json");
+            ProjectX.userCache = ProjectX.ReadyConfigChecked<Dictionary<ulong, Dictionary<string, string>>>(ProjectX.userCache, "data/userCache.json");
+            ProjectX.cacheKits = ProjectX.ReadyConfigChecked<Dictionary<ulong, Dictionary<string, double>>>(ProjectX.cacheKits, "data/cacheKits.json");
+        }
+
+        public static void SaveFiles()
+        {
+            if (friendList.Count != 0)
+            {
+                Logger.Log("Saving friendList.");
+                JsonHelper.SaveFile(friendList, GetAbsoluteFilePath("data/friendList.json"));
+            }
+
+            if (ProjectX.homeList.Count != 0)
+            {
+                Logger.Log("Saving homeList.");
+                JsonHelper.SaveFile(homeList, GetAbsoluteFilePath("data/homeList.json"));
+            }
+
+            if (ProjectX.userCache.Count != 0)
+            {
+                Logger.Log("Saving userCache.");
+                JsonHelper.SaveFile(userCache, GetAbsoluteFilePath("data/userCache.json"));
+            }
+
+            if (ProjectX.permList.Count != 0)
+            {
+                Logger.Log("Saving permissoes.");
+                JsonHelper.SaveFile(permList, GetAbsoluteFilePath("data/permList.json"));
+            }
+
+            if (ProjectX.shareList.Count != 0)
+            {
+                Logger.Log("Saving shares.");
+                JsonHelper.SaveFile(shareList, GetAbsoluteFilePath("data/shareList.json"));
+            }
+
+            if (ProjectX.cacheKits.Count != 0)
+            {
+                Logger.Log("Saving cacheKits.");
+                JsonHelper.SaveFile(cacheKits, GetAbsoluteFilePath("data/cacheKits.json"));
+            }
+
+        }
+
+        //=======================================================================
+    }
+
+    public class ProjectXModule : Fougerite.Module
+    {
+        public override string Name
+        {
+            get { return "ProjectX"; }
+        }
+        public override string Author
+        {
+            get { return "WilyWork"; }
+        }
+        public override string Description
+        {
+            get { return "ProjectX ToolsPlugins"; }
+        }
+        public override Version Version
+        {
+            get { return new Version("1.5.0"); }
         }
 
         //=================================================================
 
         public override void Initialize()
         {
-            ConfigsFolder = ModuleFolder;
-
-            //creat folders if not exist
-            CreateFolderCheck(DefualtFolders);
-
-            //init timer
-            TimerEditStart.Init();
-
-            //ready configServer
-            configServer = ProjectX.ReadyConfigChecked<Config>(configServer.Default(), "configServer.json");
-
-            // start ready files json's config's
-            HelpCommand.Start();
-            Notices.Start();
-            GatherMultipler.Start();
-            PlayerConnection.Start();
-            CraftBlock.Start();
-            Chat.Start();
-            Airdrop.Start();
-            Kits.Start();
-            RegrasCommand.Start();
-
-            ResourcesItens.Init();
-
-            //disable autosave native, 11574 days
-            ConsoleSystem.Run("save.autosavetime 999999999");
-
-            //start timer repeat saveFiles
-            Logger.Log("Sistema de salvamento a cada " + (configServer.timerSaveFilesSeconds/60).ToString() + " minutos.");
-            TimerEvento.Repeat(configServer.timerSaveFilesSeconds, 0, () =>
+            try
             {
-                Logger.Log("=== Savalndo configuracoes e mapa ===");
-                SaveFiles();
-                saveSystemCommand.SaveMap(ServerSaveManager.autoSavePath);
-            });
+                ProjectX.ConfigsFolder = ModuleFolder;
 
-            ReadyFile();
+                //creat folders if not exist
+                ProjectX.CreateFolderCheck(ProjectX.DefualtFolders);
 
-            Fougerite.Hooks.OnChatRaw += ChatReceived;
-            Fougerite.Hooks.OnTablesLoaded += InitializeTable;
-            Fougerite.Hooks.OnCrafting += CraftBlock.HookOnCrafting;
-            Fougerite.Hooks.OnPlayerGathering += GatherMultipler.HookOnPlayerGathering;
-            Fougerite.Hooks.OnDoorUse += DoorUse;
-            Fougerite.Hooks.OnEntityHurt += EntityHurt;
-            Fougerite.Hooks.OnPlayerConnected += PlayerConnection.HookPlayerConnect;
-            Fougerite.Hooks.OnPlayerDisconnected += PlayerConnection.HookPlayerDisconnect;
-            Fougerite.Hooks.OnPlayerHurt += PlayerHurt;
-            Fougerite.Hooks.OnPlayerKilled += PlayerKilled;
-            Fougerite.Hooks.OnServerShutdown += OnServerShutdown;
-            //Fougerite.Hooks.OnShowTalker += ShowTalker;
-            Fougerite.Hooks.OnChat += Chat.HookChat;
-            Fougerite.Hooks.OnAirdropCalled += Airdrop.HookOnAirdrop;
-            Fougerite.Hooks.OnSteamDeny += OnSteamDeny;
-            Fougerite.Hooks.OnEntityDeployedWithPlacer += antiGlith.EntityDeployed;
-            Fougerite.Hooks.OnPlayerSpawned += antiGlith.OnPlayerSpawned;
+                //init timer
+                TimerEditStart.Init();
+
+                //ready configServer
+                ProjectX.configServer = ProjectX.ReadyConfigChecked<ProjectX.Config>(ProjectX.configServer.Default(), "configServer.json");
+
+                try
+                {
+                    // start ready files json's config's
+                    HelpCommand.Start();
+                    Notices.Start();
+                    GatherMultipler.Start();
+                    PlayerConnection.Start();
+                    CraftBlock.Start();
+                    Chat.Start();
+                    Airdrop.Start();
+                    Kits.Start();
+                    BuildConstructor.Start();
+                    RegrasCommand.Start();
+                    AntiGlith.Start();
+                    ShowDamange.Start();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log("[Error] Start config's: " + ex);
+                }
+
+
+                ProjectX.ResourcesItens.Init();
+
+                //disable autosave native, 11574 days
+                ConsoleSystem.Run("save.autosavetime 999999999");
+
+                //start timer repeat saveFiles
+                Logger.Log("Sistema de salvamento a cada " + (ProjectX.configServer.timerSaveFilesSeconds / 60).ToString() + " minutes.");
+                TimerEvento.Repeat(ProjectX.configServer.timerSaveFilesSeconds, 0, () =>
+                {
+                    Logger.Log("=== Savalndo configuracoes e mapa ===");
+                    ProjectX.SaveFiles();
+                    saveSystemCommand.SaveMap(ServerSaveManager.autoSavePath);
+                });
+
+                ProjectX.ReadyFile();
+
+                Fougerite.Hooks.OnChatRaw += ChatReceived;
+                Fougerite.Hooks.OnTablesLoaded += InitializeTable;
+                Fougerite.Hooks.OnCrafting += CraftBlock.HookOnCrafting;
+                Fougerite.Hooks.OnPlayerGathering += GatherMultipler.HookOnPlayerGathering;
+                Fougerite.Hooks.OnDoorUse += ShareCommand.DoorUse;
+                Fougerite.Hooks.OnEntityHurt += ShowDamange.EntityHurt;
+                Fougerite.Hooks.OnPlayerConnected += PlayerConnection.HookPlayerConnect;
+                Fougerite.Hooks.OnPlayerDisconnected += PlayerConnection.HookPlayerDisconnect;
+                Fougerite.Hooks.OnPlayerHurt += ShowDamange.PlayerHurt;
+                Fougerite.Hooks.OnPlayerKilled += ShowDamange.PlayerKilled;
+                Fougerite.Hooks.OnNPCHurt += ShowDamange.NPCHurt;
+                Fougerite.Hooks.OnEntityDestroyed += ShowDamange.OnEntityDestroyed;
+                Fougerite.Hooks.OnServerShutdown += OnServerShutdown;
+                Fougerite.Hooks.OnShowTalker += ShowTalker;
+                Fougerite.Hooks.OnChat += Chat.HookChat;
+                Fougerite.Hooks.OnAirdropCalled += Airdrop.HookOnAirdrop;
+                Fougerite.Hooks.OnSteamDeny += OnSteamDeny;
+                Fougerite.Hooks.OnEntityDeployedWithPlacer += AntiGlith.EntityDeployed;
+                Fougerite.Hooks.OnPlayerSpawned += AntiGlith.OnPlayerSpawned;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log("[Error] Initialize: " + ex);
+            }
+
         }
 
         public override void DeInitialize()
@@ -312,50 +463,27 @@ namespace ProjectX
             Fougerite.Hooks.OnTablesLoaded -= InitializeTable;
             Fougerite.Hooks.OnCrafting -= CraftBlock.HookOnCrafting;
             Fougerite.Hooks.OnPlayerGathering -= GatherMultipler.HookOnPlayerGathering;
-            Fougerite.Hooks.OnDoorUse -= DoorUse;
-            Fougerite.Hooks.OnEntityHurt -= EntityHurt;
+            Fougerite.Hooks.OnDoorUse -= ShareCommand.DoorUse;
+            Fougerite.Hooks.OnEntityHurt -= ShowDamange.EntityHurt;
             Fougerite.Hooks.OnPlayerConnected -= PlayerConnection.HookPlayerConnect;
             Fougerite.Hooks.OnPlayerDisconnected -= PlayerConnection.HookPlayerDisconnect;
-            Fougerite.Hooks.OnPlayerHurt -= PlayerHurt;
-            Fougerite.Hooks.OnPlayerKilled -= PlayerKilled;
+            Fougerite.Hooks.OnPlayerHurt -= ShowDamange.PlayerHurt;
+            Fougerite.Hooks.OnPlayerKilled -= ShowDamange.PlayerKilled;
+            Fougerite.Hooks.OnNPCHurt -= ShowDamange.NPCHurt;
+            Fougerite.Hooks.OnEntityDestroyed -= ShowDamange.OnEntityDestroyed;
             Fougerite.Hooks.OnServerShutdown -= OnServerShutdown;
-            //Fougerite.Hooks.OnShowTalker -= ShowTalker;
+            Fougerite.Hooks.OnShowTalker -= ShowTalker;
             Fougerite.Hooks.OnChat -= Chat.HookChat;
             Fougerite.Hooks.OnAirdropCalled -= Airdrop.HookOnAirdrop;
             Fougerite.Hooks.OnSteamDeny -= OnSteamDeny;
-            Fougerite.Hooks.OnEntityDeployedWithPlacer -= antiGlith.EntityDeployed;
-            Fougerite.Hooks.OnPlayerSpawned -= antiGlith.OnPlayerSpawned;
+            Fougerite.Hooks.OnEntityDeployedWithPlacer -= AntiGlith.EntityDeployed;
+            Fougerite.Hooks.OnPlayerSpawned -= AntiGlith.OnPlayerSpawned;
+
+            //disable timer
+            TimerEditStart.DeInitialize();
+
+            ProjectX.SaveFiles();
         }
-
-        //void OnEntityDestroyed(DestroyEvent de)
-        //{
-        //    Debug.Log("teste");
-        //    NetUser killeruser = de.DamageEvent.attacker.client?.netUser ?? null;
-
-        //    if (killeruser != null && killeruser.playerClient != null)
-        //    {
-        //        try
-        //        {
-        //            if (de.DamageEvent.victim.idMain != null)
-        //            {
-        //                var structure = de.DamageEvent.victim.idMain.GetComponent<StructureComponent>();
-        //                var deployable = de.DamageEvent.victim.idMain.GetComponent<DeployableObject>();
-        //                if (structure && structure._master != null)// && structure._master.ownerID != killeruser.userID)
-        //                {
-        //                    Logger.LogDebug("atacante: " + killeruser.userID.ToString() + "( " + killeruser.displayName + " ) strutura: " + structure.name.ToString() + " Dono: " + structure._master?.creatorID.ToString());
-        //                }
-        //                else if (deployable && deployable.creatorID != killeruser.userID)
-        //                {
-        //                    Logger.LogDebug("atacante: " + killeruser.userID.ToString() + "( " + killeruser.displayName + " ) strutura: " + deployable.name.ToString() + " Dono: " + deployable.creatorID.ToString());
-        //                }
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Logger.LogDebug("[HookPlayerKilled] Erro no log de C4!" + ex);
-        //        }
-        //    }
-        //}
 
         void ChatReceived(ref ConsoleSystem.Arg Arguments)
         {
@@ -385,7 +513,7 @@ namespace ProjectX
                     DamangeCommand.DammangeDesactiveCommand(Arguments, ChatArguments);
                     break;
                 case "/share":
-                    shareCommand.Execute(Arguments, ChatArguments);
+                    ShareCommand.Execute(Arguments, ChatArguments);
                     break;
                 case "/shares":
                     shareListCommand.Execute(Arguments, ChatArguments);
@@ -514,6 +642,7 @@ namespace ProjectX
                     restartSystemCommand.Execute(Arguments, ChatArguments);
                     break;
                 case "/fougerite":
+                    Fougerite.Server.Cache[Arguments.argUser.userID].MessageFrom(ProjectX.configServer.NameServer, "[color #ffca2a]ProjectX Version:[/color] " + Version.ToString());
                     break;
                 case "/rbban":
                     break;
@@ -522,221 +651,25 @@ namespace ProjectX
                 case "/rbunban":
                     break;
                 default:
-                    Fougerite.Server.Cache[Arguments.argUser.userID].MessageFrom(configServer.NameServer, configServer.WarnInvalidCommand);
+                    Fougerite.Server.Cache[Arguments.argUser.userID].MessageFrom(ProjectX.configServer.NameServer, ProjectX.configServer.WarnInvalidCommand);
                     break;
             }
         }
 
         void InitializeTable(Dictionary<string, LootSpawnList> tables)
         {
-            displaynameToDataBlock.Clear();
+            if (ProjectX.displaynameToDataBlock != null) {
+                ProjectX.displaynameToDataBlock.Clear();
+            }
             foreach (ItemDataBlock itemdef in DatablockDictionary.All)
             {
-                displaynameToDataBlock.Add(itemdef.name.ToLower(), itemdef);
+                ProjectX.displaynameToDataBlock.Add(itemdef.name.ToLower(), itemdef);
             }
         }
-
-        void DoorUse(Fougerite.Player p, DoorEvent de)
-        {
-            if (de.Entity.UOwnerID == p.UID || p.Admin)
-            {
-                de.Open = true;
-            }
-            else if (shareCommand.isShare(de.Entity.UOwnerID, p.UID))
-            {
-                de.Open = true;
-            }
-            else
-            {
-                de.Open = false;
-            }
-        }
-
-        void EntityHurt(HurtEvent he)
-        {
-            try
-            {
-                if (he.AttackerIsPlayer && he.DamageEvent.attacker.client != null && he.DamageEvent.attacker.client.GetComponent<RemoveCommand.RemoveHandler>() != null)
-                {
-                    if (he.Entity.UOwnerID == he.DamageEvent.attacker.userID || he.DamageEvent.attacker.client.netUser.admin)
-                    {
-                        RemoveCommand.GiveItemRemove(he, he.Entity.Name, he.DamageEvent.attacker.client.GetComponent<RemoveCommand.RemoveHandler>());
-                    }
-                    else
-                    {
-                        if (shareCommand.isShare(he.Entity.UOwnerID, he.DamageEvent.attacker.userID))
-                        {
-                            RemoveCommand.GiveItemRemove(he, he.Entity.Name, he.DamageEvent.attacker.client.GetComponent<RemoveCommand.RemoveHandler>());
-                        }
-                        else
-                        {
-                            Fougerite.Server.Cache[he.DamageEvent.attacker.userID].MessageFrom(configServer.NameServer, "[color red] Você não tem permissão para remover.");
-                        }
-
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogDebug("[HookOnHurtEntity] Some error showed up error 0. Report this. " + ex);
-            }
-        }
-
-        void PlayerHurt(HurtEvent he)
-        {
-            try
-            {
-                if (he.AttackerIsPlayer && he.VictimIsPlayer)
-                {
-
-                    Fougerite.Player cachePlayer = (Fougerite.Player)he.Attacker;
-                    Fougerite.Player cachePlayer2 = (Fougerite.Player)he.Victim;
-
-                    if (cachePlayer.UID != cachePlayer2.UID)
-                    {
-                        HomeTeleport cachedHomeTeleport = cachePlayer2.PlayerClient.GetComponent<HomeTeleport>();
-                        if (cachedHomeTeleport != null)
-                            cachedHomeTeleport.OnCancel();
-
-                        var cacheTpr = cachePlayer2.PlayerClient.GetComponent<TPRequest>();
-                        if (cacheTpr != null)
-                            cacheTpr.OnCancel();
-
-                        if (FriendCommand.isFriend(cachePlayer.UID, cachePlayer2.UID))
-                        {
-                            he.DamageAmount = 0f;
-                            cachePlayer.Notice("☠", "Pare é seu amigo " + cachePlayer2.Name, 3);
-                        }
-                        else
-                        {
-                            // cancela teleport
-                            tpr.OnHurtPlayer(cachePlayer2.PlayerClient);
-
-                            StoragePlayer cacheStorage = cachePlayer.PlayerClient.gameObject.GetComponent<StoragePlayer>();
-                            if (cacheStorage.showDamange)
-                            {
-                                cachePlayer.Notice("☠", "Você acertou " + he.DamageEvent.victim.client.userName + " : " + (cachePlayer2.Health - he.DamageAmount).ToString("N0") + " | 100", 4);
-                            }
-
-                            StoragePlayer cacheStorage2 = cachePlayer2.PlayerClient.gameObject.GetComponent<StoragePlayer>();
-                            if (cacheStorage2.showDamange)
-                            {
-                                cachePlayer2.Notice("☠", cachePlayer.Name + " Acertou você Dano: " + he.DamageAmount.ToString("N0"), 4);
-                            }
-                        }
-                    }
-                }
-                else if (he.VictimIsPlayer && he.AttackerIsEntity && he.DamageEvent.attacker.idMain != null && he.DamageEvent.victim.client != null)
-                {
-
-                    Fougerite.Player cachePlayer2 = (Fougerite.Player)he.Victim;
-                    if (cachePlayer2 != null)
-                    {
-                        if (FriendCommand.isFriend(he.DamageEvent.attacker.userID, cachePlayer2.UID))
-                        {
-                            he.DamageAmount = 0f;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogDebug("[HookOnHurtPlayer] Some error showed up error 2. Report this. " + ex);
-            }
-        }
-
-        void PlayerKilled(DeathEvent event2)
-        {
-
-            NetUser killeruser = event2.DamageEvent.attacker.client?.netUser ?? null;
-            NetUser hurteduser = event2.DamageEvent.victim.client?.netUser ?? null;
-            if (killeruser != null && killeruser.playerClient != null && hurteduser != null && hurteduser.playerClient != null && event2.DamageEvent.victim.idMain.GetComponent("HumanController"))
-            {
-                // cancela teleport
-                tpr.OnHurtPlayer(hurteduser.playerClient);
-
-                // pega todos os atributos
-                double distanciaKill = Math.Floor(Vector3.Distance(event2.DamageEvent.attacker.id.transform.position, event2.DamageEvent.victim.id.transform.position));
-                string armaOnKilled = "";
-                string corpoOnKilled = event2.DamageEvent.bodyPart.GetNiceName();
-                var vitima = event2.DamageEvent.victim.idMain.GetComponent<HumanBodyTakeDamage>();
-                // validar arma
-                if (vitima._bleedingLevel == event2.DamageEvent.amount)
-                {
-                    armaOnKilled = "Sangramento";
-                }
-                else if (!(event2.DamageEvent.extraData is WeaponImpact))
-                {
-                    if (event2.DamageEvent.attacker.id.GetComponent<TimedExplosive>())
-                    {
-                        armaOnKilled = "C4";
-                    }
-                    else if (event2.DamageEvent.attacker.id.GetComponent<TimedGrenade>())
-                    {
-                        armaOnKilled = "Granada";
-                    }
-                    else if (event2.DamageEvent.damageTypes == 0 && WaterLine.Height != 0f && vitima.transform.position.y <= WaterLine.Height)
-                    {
-                        armaOnKilled = "nulo"; //Agua";
-                    }
-                    else if (event2.DamageEvent.attacker.id.GetComponent<Radiation>() && event2.DamageEvent.attacker.id.GetComponent<Metabolism>().GetRadLevel() >= 500f)
-                    {
-                        armaOnKilled = "nulo"; //Radiação";
-                    }
-                    else if (event2.DamageEvent.attacker.id.GetComponent<Metabolism>())
-                    {
-                        if (event2.DamageEvent.damageTypes.ToString() == "damage_melee")
-                        {
-                            armaOnKilled = "Arco";
-                        }
-                        else
-                        {
-                            armaOnKilled = "nulo"; //Suicide"; //keda //fome //frio
-                        }
-                    }
-                    else if (event2.DamageEvent.attacker.id.GetComponent<SpikeWall>())
-                    {
-                        armaOnKilled = "Spike Wall";
-                    }
-                    else
-                    {
-                        armaOnKilled = "Arco";
-                    }
-                }
-                else
-                {
-                    WeaponImpact cachedWeapon = event2.DamageEvent.extraData as WeaponImpact;
-                    armaOnKilled = cachedWeapon.dataBlock.name;
-                }
-                if (armaOnKilled != "nulo")
-                {
-                    if (armaOnKilled == "Sangramento")
-                    {
-                        BroadCast(configServer.NameServer, "[color #0dbf2f][color #ff0000]" + hurteduser.displayName + "[/color] morreu sangrando.");
-                    }
-                    else
-                    {
-                        BroadCast(configServer.NameServer, "[color #0dbf2f][color #ff0000]" + killeruser.displayName + "[/color]  matou [color #00fff5]" + hurteduser.displayName + "[/color] acertou " + corpoOnKilled + ",com ([color #ffffff]" + armaOnKilled + "[/color]) dist. [color #ff0000]" + distanciaKill + "mt[/color].[/color]");
-                        if (armaOnKilled != "Spike Wall" && killeruser.userID != hurteduser.userID)
-                        {
-                            // Puts("[death]{ 'atacante':'" + killeruser.userID.ToString() + "', 'vitima':'" + hurteduser.userID.ToString() + "', 'arma':'" + armaOnKilled + "', 'distancia':'" + distanciaKill + "', 'local':'" + corpoOnKilled + "'}[death]");
-                        }
-                    }
-                }
-                else
-                {
-                    return;
-                }
-            }
-            else
-            {
-                return;
-            }
-        }
-
+      
         void OnServerShutdown()
         {
-            SaveFiles();
+            ProjectX.SaveFiles();
         }
 
         void ShowTalker(uLink.NetworkPlayer player, Fougerite.Player p)
@@ -767,137 +700,5 @@ namespace ProjectX
                 e.ForceAllow = true;
             }
         }
-
-        //============================ Classes ==================================
-
-        public class StoragePlayer : MonoBehaviour
-        {
-            public string oldUserPm;
-            public bool showDamange = true;
-        }
-
-        public class Ingrediente
-        {
-            public string item;
-            public string quantidade;
-            public Dictionary<string, int> ingredientes = new Dictionary<string, int>();
-            public string[] split;
-
-            public Ingrediente(List<string> itens)
-            {
-                foreach (string value in itens)
-                {
-                    split = value.Split(new Char[] { '_' });
-                    ingredientes.Add(split[0].ToLower(), Convert.ToInt32(split[1]));
-                }
-            }
-        }
-
-        public class ResourcesItens
-        {
-            public static Dictionary<string, Ingrediente> IngredientesItem;
-
-            public static void Init()
-            {
-                IngredientesItem = new Dictionary<string, Ingrediente>();
-                IngredientesItem.Add("Bed", new Ingrediente(new List<string>() { "Cloth_40", "Metal Fragments_100" }));
-                IngredientesItem.Add("Camp Fire", new Ingrediente(new List<string>() { "Wood_5" }));
-                IngredientesItem.Add("Furnace", new Ingrediente(new List<string>() { "Stones_15", "Wood_20", "Low Grade Fuel_10" }));
-                IngredientesItem.Add("LargeSpikeWall", new Ingrediente(new List<string>() { "Wood_200" }));
-                IngredientesItem.Add("LargeWoodStorage", new Ingrediente(new List<string>() { "Wood_60" }));
-                IngredientesItem.Add("MetalCeiling", new Ingrediente(new List<string>() { "Low Quality Metal_6" }));
-                IngredientesItem.Add("MetalDoor", new Ingrediente(new List<string>() { "Metal Fragments_200" }));
-                IngredientesItem.Add("MetalDoorFrame", new Ingrediente(new List<string>() { "Low Quality Metal_4" }));
-                IngredientesItem.Add("MetalFoundation", new Ingrediente(new List<string>() { "Low Quality Metal_8" }));
-                IngredientesItem.Add("MetalPillar", new Ingrediente(new List<string>() { "Low Quality Metal_2" }));
-                IngredientesItem.Add("MetalRamp", new Ingrediente(new List<string>() { "Low Quality Metal_5" }));
-                IngredientesItem.Add("MetalStairs", new Ingrediente(new List<string>() { "Low Quality Metal_5" }));
-                IngredientesItem.Add("MetalWall", new Ingrediente(new List<string>() { "Low Quality Metal_4" }));
-                IngredientesItem.Add("MetalWindowFrame", new Ingrediente(new List<string>() { "Low Quality Metal_4" }));
-                //IngredientesItem.Add("MetalWindowBars", new Ingrediente(new List<string>() { "Stones_1" }));
-                IngredientesItem.Add("Repair Bench", new Ingrediente(new List<string>() { "Stones_12", "Wood_60", "Metal Fragments_50", "Low Grade Fuel_6" }));
-                IngredientesItem.Add("Sleeping Bag", new Ingrediente(new List<string>() { "Cloth_15" }));
-                IngredientesItem.Add("Small Stash", new Ingrediente(new List<string>() { "Leather_10" }));
-                IngredientesItem.Add("Spike Wall", new Ingrediente(new List<string>() { "Wood_100" }));
-                IngredientesItem.Add("WoodBarricade", new Ingrediente(new List<string>() { "Wood_30" }));
-                IngredientesItem.Add("Wood Barricade", new Ingrediente(new List<string>() { "Wood_30" }));
-                IngredientesItem.Add("WoodCeiling", new Ingrediente(new List<string>() { "Wood Planks_6" }));
-                IngredientesItem.Add("WoodDoorFrame", new Ingrediente(new List<string>() { "Wood Planks_4" }));
-                IngredientesItem.Add("WoodenDoorFrame", new Ingrediente(new List<string>() { "Wood_30" }));
-                IngredientesItem.Add("WoodenDoor", new Ingrediente(new List<string>() { "Wood_30" }));
-                IngredientesItem.Add("WoodFoundation", new Ingrediente(new List<string>() { "Wood Planks_8" }));
-                IngredientesItem.Add("WoodGate", new Ingrediente(new List<string>() { "Wood_120" }));
-                IngredientesItem.Add("WoodGateway", new Ingrediente(new List<string>() { "Wood_400" }));
-                IngredientesItem.Add("WoodPillar", new Ingrediente(new List<string>() { "Wood Planks_2" }));
-                IngredientesItem.Add("WoodRamp", new Ingrediente(new List<string>() { "Wood Planks_5" }));
-                IngredientesItem.Add("WoodShelter", new Ingrediente(new List<string>() { "Wood_50" }));
-                IngredientesItem.Add("WoodStairs", new Ingrediente(new List<string>() { "Wood Planks_5" }));
-                IngredientesItem.Add("WoodStorageBox", new Ingrediente(new List<string>() { "Wood_30" }));
-                IngredientesItem.Add("WoodWall", new Ingrediente(new List<string>() { "Wood Planks_4" }));
-                IngredientesItem.Add("WoodWindowFrame", new Ingrediente(new List<string>() { "Wood Planks_4" }));
-                IngredientesItem.Add("Workbench", new Ingrediente(new List<string>() { "Stones_8", "Wood_50" }));
-                IngredientesItem.Add("WoodBox", new Ingrediente(new List<string>() { "Wood_30" }));
-                IngredientesItem.Add("WoodBoxLarge", new Ingrediente(new List<string>() { "Wood_60" }));
-                IngredientesItem.Add("LargeWoodSpikeWall", new Ingrediente(new List<string>() { "Wood_200" }));
-                IngredientesItem.Add("WoodSpikeWall", new Ingrediente(new List<string>() { "Wood_100" }));
-
-            }
-        }
-
-        //=======================================================================
-
-        //========================== ready e save files =========================
-
-        public static void ReadyFile()
-        {
-            friendList = ProjectX.ReadyConfigChecked<Dictionary<ulong, List<string>>>(friendList, "data/friendList.json");
-            shareList = ProjectX.ReadyConfigChecked<Dictionary<ulong, List<string>>>(shareList, "data/shareList.json");
-            permList = ProjectX.ReadyConfigChecked<Dictionary<ulong, List<string>>>(permList, "data/permList.json");
-            homeList = ProjectX.ReadyConfigChecked<Dictionary<ulong, Dictionary<string, string>>>(homeList, "data/homeList.json");
-            userCache = ProjectX.ReadyConfigChecked<Dictionary<ulong, Dictionary<string, string>>>(userCache, "data/userCache.json");
-            cacheKits = ProjectX.ReadyConfigChecked< Dictionary<ulong, Dictionary<string, double>>>(cacheKits, "data/cacheKits.json");
-        }
-
-        public static void SaveFiles()
-        {
-            if (friendList.Count != 0)
-            {
-                Logger.Log("Saving friendList.");
-                JsonHelper.SaveFile(friendList, GetAbsoluteFilePath("data/friendList.json"));
-            }
-
-            if (homeList.Count != 0)
-            {
-                Logger.Log("Saving homeList.");
-                JsonHelper.SaveFile(homeList, GetAbsoluteFilePath("data/homeList.json"));
-            }
-
-            if (userCache.Count != 0)
-            {
-                Logger.Log("Saving userCache.");
-                JsonHelper.SaveFile(userCache, GetAbsoluteFilePath("data/userCache.json"));
-            }
-
-            if (permList.Count != 0)
-            {
-                Logger.Log("Saving permissoes.");
-                JsonHelper.SaveFile(permList, GetAbsoluteFilePath("data/permList.json"));
-            }
-
-            if (shareList.Count != 0)
-            {
-                Logger.Log("Saving shares.");
-                JsonHelper.SaveFile(shareList, GetAbsoluteFilePath("data/shareList.json"));
-            }
-
-            if (cacheKits.Count != 0)
-            {
-                Logger.Log("Saving cacheKits.");
-                JsonHelper.SaveFile(cacheKits, GetAbsoluteFilePath("data/cacheKits.json"));
-            }
-
-        }
-
-        //=======================================================================
     }
 }

@@ -1,13 +1,13 @@
 // Reference: Facepunch.ID
 // Reference: Facepunch.MeshBatch
 // Reference: Facepunch.HitBox
+using UnityEngine;
 
 namespace ProjectX.Plugins
 {
-    using UnityEngine;
-
     public class OwnerCommand
     {
+        public static int terrainLayer = LayerMask.GetMask(new string[] { "Static", "Terrain" });
         /* owner */
         public static void Execute(ConsoleSystem.Arg Arguments, string[] ChatArguments)
         {
@@ -53,6 +53,19 @@ namespace ProjectX.Plugins
                     else
                     {
                         player.MessageFrom(ProjectX.configServer.NameServer, "[color yellow]Isso não é uma construção!");
+                        if (Arguments.argUser.CanAdmin())
+                        {
+                            player.MessageFrom(ProjectX.configServer.NameServer, "[color red] name: " + cachedRaycast.collider.name);
+                            if(cachedRaycast.collider.name == null || cachedRaycast.collider.name == "")
+                            {
+                                if (Physics.Raycast(cachedCharacter.transform.localPosition, cachedRaycast.collider.transform.localPosition, out cachedRaycast, terrainLayer)) {
+                                    if(cachedRaycast.collider != null)
+                                    {
+                                        player.MessageFrom(ProjectX.configServer.NameServer, "[color red] name Hit: " + cachedRaycast.collider.name);
+                                    }
+                                }
+                            }
+                        }
                         return;
                     }
                 }
@@ -85,6 +98,20 @@ namespace ProjectX.Plugins
                     else
                     {
                         player.MessageFrom(ProjectX.configServer.NameServer, "[color yellow]Isso não é uma construção!");
+                        if (Arguments.argUser.CanAdmin())
+                        {
+                            player.MessageFrom(ProjectX.configServer.NameServer, "[color red] "+ cachedRaycast.collider.name + " - " + cachedRaycast.collider.gameObject.name);
+                            if (cachedRaycast.collider.name == null || cachedRaycast.collider.name == "")
+                            {
+                                if (Physics.Raycast(cachedCharacter.transform.localPosition, cachedRaycast.collider.transform.localPosition, out cachedRaycast, terrainLayer))
+                                {
+                                    if (cachedRaycast.collider != null)
+                                    {
+                                        player.MessageFrom(ProjectX.configServer.NameServer, "[color red] name Hit: " + cachedRaycast.collider.name);
+                                    }
+                                }
+                            }
+                        }
                         return;
                     }
                 }

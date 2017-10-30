@@ -6,23 +6,23 @@ namespace ProjectX.Plugins
 {
     public class Home
     {
-        public static string teleportCancelled = "Teleporte cancelado!";
-        public static string teleportRestricted = "Você não pode se teleporta para sua casa neste local!";
-        public static string onlyBuildingsMessage = "Só é possível dar sethome em cima da fundação com 1 pilar.";
-        public static string onlyFoundationsMessage = "Só é possível dar sethome em cima da fundação com 1 pilar.";
-        public static string warnSethomeRock = "Parece que você esta perto de uma árvore ou rocha, afaste-se!";
-        public static string onlySelfOrFriend = "Para dar sethome na casa de seu amigo, é preciso ter share.";
+        public static string teleportCancelled = "[color red]Teleporte cancelado!";
+        public static string teleportRestricted = "[color yellow]Você não pode se teleporta para sua casa neste local!";
+        public static string onlyBuildingsMessage = "[color yellow]Só é possível dar sethome em cima da fundação com 1 pilar.";
+        public static string onlyFoundationsMessage = "[color yellow]Só é possível dar sethome em cima da fundação com 1 pilar.";
+        public static string warnSethomeRock = "[color yellow]Parece que você esta perto de uma árvore ou rocha, afaste-se!";
+        public static string onlySelfOrFriend = "[color yellow]Para dar sethome na casa de seu amigo, é preciso ter share.";
         public static string onlySelfMessage = "On buildings, you are only allowed to sethome on your home.";
-        public static string nohomesSet = "Você não tem nenhuma casa.";
-        public static string homeDoesntExist = "Está casa não existe!";
-        public static string notAllowedHere = "Você não tem permissão para dar sethome aqui.";
-        public static string alreadyWaiting = "Você já está a espera de um teletransporte casa.";
-        public static string cooldownMessage = "Você deve esperar {0} segundos antes de solicitar outro teletransporte casa.";
-        public static string teleportationMessage = "Você será teleportado para sua casa em {0} segundos.";
+        public static string nohomesSet = "[color yellow]Você não tem nenhuma casa.";
+        public static string homeDoesntExist = "[color yellow]Está casa não existe!";
+        public static string notAllowedHere = "[color red]Você não tem permissão para dar sethome aqui.";
+        public static string alreadyWaiting = "[color red]Você já está a espera de um teletransporte casa.";
+        public static string cooldownMessage = "[color yellow]Você deve esperar {0} segundos antes de solicitar outro teletransporte casa.";
+        public static string teleportationMessage = "[color #00efca]Você será teleportado para sua casa em {0} segundos.";
         public static string homelistMessage = "Lista de casas:";
-        public static string newhome = "Você definiu um novo lar chamado {0} @ {1}";
-        public static string maxhome = "Você atingiu o limite máximo de casas.";
-        public static string homeErased = "Sua casa( {0} ) foi apagada com sucesso!";
+        public static string newhome = "[color green]Você definiu um novo lar chamado[/color] {0} @ {1}";
+        public static string maxhome = "[color yellow]Você atingiu o limite máximo de casas.";
+        public static string homeErased = "[color green]Sua casa( [color #ffffff]{0}[/color] ) foi apagada com sucesso!";
         public static string sethomeHelp1 = "/sethome XXX => to set home where you stand";
         public static string sethomeHelp2 = "/sethome remove XXX => to remove a home";
         public static string sethomeHelp3 = "[color yellow]Uso de espaço no nome da home é proibido.";
@@ -33,7 +33,7 @@ namespace ProjectX.Plugins
         public static bool sethomeOnlySelf = true;
         public static bool useShare = true;
 
-        public static string notAllowed = "Você não tem permissão para usar este comando.";
+        public static string notAllowed = "[color red]Você não tem permissão para usar este comando.";
         public static bool cancelOnHurt = true;
         public static int maxAllowed = 4;
         public static int timerTeleport = 7;
@@ -178,7 +178,7 @@ namespace ProjectX.Plugins
                     ulong ownerid = Home.cachedhitInstance.physicalColliderReferenceOnly.GetComponent<StructureComponent>()._master.ownerID;
                     if (ownerid != pl.PlayerClient.userID)
                     {
-                        if (!shareCommand.isShare(ownerid, pl.PlayerClient.userID))
+                        if (!ShareCommand.isShare(ownerid, pl.PlayerClient.userID))
                         {
                             pl.MessageFrom(ProjectX.configServer.NameServer, Home.onlySelfOrFriend);
                             return;
