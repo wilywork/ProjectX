@@ -32,10 +32,11 @@ TimerEvento.Once(delay, () => {
 });
 
 //Create timer with repetitions  dalay=seconds  reps=0(infinit)  callback=action/function
-TimerEvento.Repeat(delay, 0, () => {
-    ProjectX.BroadCast(ProjectX.configServer.NameServer,"timer repeat infinite.");
-});
 
-TimerEvento.Repeat(delay, 5, () => {
-    ProjectX.BroadCast(ProjectX.configServer.NameServer,"timer 5 repeat.");
-});
+    TimerEvento.Repeat(delay, 0, () => {
+        ProjectX.BroadCast(ProjectX.configServer.NameServer,"timer repeat infinite.");
+    });
+
+    TimerEvento.Repeat(delay, 5, () => {
+        ProjectX.BroadCast(ProjectX.configServer.NameServer,"timer 5 repeat.");
+    });
