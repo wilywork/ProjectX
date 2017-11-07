@@ -25,11 +25,12 @@ using TimerEdit;
 // !! AND IMPORTANT !!!
 
 //Create timer  delay=seconds  callback=action/function
-int delay = 10;
-TimerEvento.Once(delay, () => {
-    //your code for executed!
-    //the code here will be executed in 10 seconds
-});
+
+    int delay = 10;
+    TimerEvento.Once(delay, () => {
+        //your code for executed!
+        //the code here will be executed in 10 seconds
+    });
 
 //Create timer with repetitions  dalay=seconds  reps=0(infinit)  callback=action/function
 
