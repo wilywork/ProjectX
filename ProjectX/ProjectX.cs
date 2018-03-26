@@ -48,7 +48,6 @@ namespace ProjectX
             public string InventoryFull;
             public int totalDeDiasSemlogar;
             public float timerSaveFilesSeconds;
-            public int limitFriends;
             public int limitShares;
 
             public Config Default()
@@ -60,7 +59,6 @@ namespace ProjectX
                 totalDeDiasSemlogar = 5;
                 timerSaveFilesSeconds = 3600;
                 limitShares = 6;
-                limitFriends = 5;
                 return this;
             }
         }
@@ -372,7 +370,7 @@ namespace ProjectX
         }
         public override Version Version
         {
-            get { return new Version("1.5.0"); }
+            get { return new Version("1.5.1"); }
         }
 
         //=================================================================
@@ -403,10 +401,11 @@ namespace ProjectX
                     Chat.Start();
                     Airdrop.Start();
                     Kits.Start();
-                    BuildConstructor.Start();
                     RegrasCommand.Start();
                     AntiGlith.Start();
                     ShowDamange.Start();
+                    Avisos.Start();
+                    Friends.Start();
                 }
                 catch (Exception ex)
                 {
@@ -649,6 +648,9 @@ namespace ProjectX
                 case "/rustbuster":
                     break;
                 case "/rbunban":
+                    break;
+                case "/avisos":
+                    Avisos.Execute(Arguments, ChatArguments);
                     break;
                 default:
                     Fougerite.Server.Cache[Arguments.argUser.userID].MessageFrom(ProjectX.configServer.NameServer, ProjectX.configServer.WarnInvalidCommand);

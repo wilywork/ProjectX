@@ -100,7 +100,7 @@
     <Compile Include="extensoes\TimerEvento.cs" />
     <Compile Include="Plugins\airdrop.cs" />
     <Compile Include="Plugins\antiGlith.cs" />
-    <Compile Include="Plugins\buildConstructor.cs" />
+    <Compile Include="Plugins\avisos.cs" />
     <Compile Include="Plugins\chat.cs" />
     <Compile Include="Plugins\clearSystem.cs" />
     <Compile Include="Plugins\commandsConsole.cs" />

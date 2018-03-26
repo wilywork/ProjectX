@@ -1,12 +1,4 @@
-
-packages/mongocsharpdriver\.1\.11\.0/
-
-ProjectX/obj/x64/Release/
-
-ProjectX/bin/Release/
-
-ProjectX/bin/Debug/
-
-ProjectX/obj/Debug/
-
-ProjectX/obj/Release/
+packages/
+ProjectX/bin
+ProjectX/obj
+.vs

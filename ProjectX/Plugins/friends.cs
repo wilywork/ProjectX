@@ -3,8 +3,49 @@ using System.Collections.Generic;
 
 namespace ProjectX.Plugins
 {
+
+    class Friends
+    {
+
+        public class Config
+        {
+            public string helpRemove;
+            public string helpAdd;
+            public string warnRemove;
+            public string warnAdd;
+            public string noHaveFriends;
+            public string playerNotFoundInList;
+            public string playerNotFound;
+            public string warnLimitFriends;
+            public int limitFriends;
+
+            public Config Default()
+            {
+                helpRemove = "To remove a friend use: /unfriend Nome";
+                helpAdd = "To add a friend use: /addfriend Nome";
+                warnRemove = "You removed {0} from your friends list.";
+                warnAdd = "You added the {0} on your friends list.";
+                noHaveFriends = "You do not have friends.";
+                playerNotFoundInList = "No players on your list with this name: {0}, try using the SteamID.";
+                playerNotFound = "Player not found.";
+                warnLimitFriends = "You have reached the maximum number of friends.";
+                limitFriends = 5;
+                
+                return this;
+            }
+        }
+
+        public static Config configFriends = new Config();
+
+        public static void Start()
+        {
+            configFriends = ProjectX.ReadyConfigChecked<Config>(configFriends.Default(), "config/friends.json");
+        }
+    }
+
     class UnFriendCommand
     {
+
         public static void Execute(ConsoleSystem.Arg Arguments, string[] ChatArguments)
         {
             var pl = Fougerite.Server.Cache[Arguments.argUser.userID];
@@ -12,7 +53,7 @@ namespace ProjectX.Plugins
 
             if (playerName == string.Empty)
             {
-                pl.MessageFrom(ProjectX.configServer.NameServer, "[color yellow] Para remover um amigo use:[/color]  /unfriend Nome");
+                pl.MessageFrom(ProjectX.configServer.NameServer, Friends.configFriends.helpRemove);
                 return;
             }
 
@@ -20,12 +61,12 @@ namespace ProjectX.Plugins
 
             if (!ProjectX.friendList.ContainsKey(pl.UID) || ProjectX.friendList[pl.UID].Count == 0)
             {
-                pl.MessageFrom(ProjectX.configServer.NameServer, "[color yellow]Você não tem amigos.");
+                pl.MessageFrom(ProjectX.configServer.NameServer, Friends.configFriends.noHaveFriends);
             }
             else if (cachePlayer2 != null && ProjectX.friendList[pl.UID].Contains(cachePlayer2.SteamID))
             {
                 ProjectX.friendList[pl.UID].Remove(cachePlayer2.SteamID);
-                pl.MessageFrom(ProjectX.configServer.NameServer, "[color green]Você removeu [color #ffffff]" + cachePlayer2.Name + "[/color] da sua lista de amigos.");
+                pl.MessageFrom(ProjectX.configServer.NameServer, string.Format(Friends.configFriends.warnRemove, cachePlayer2.Name) );
 
             } else if( playerName.Length == 17 && ProjectX.friendList[pl.UID].Contains(playerName) ) {
 
@@ -33,12 +74,12 @@ namespace ProjectX.Plugins
                 if (ProjectX.userCache.ContainsKey(Convert.ToUInt64(playerName))) {
                     playerName = ProjectX.userCache[Convert.ToUInt64(playerName)]["name"];
                 }
-                pl.MessageFrom(ProjectX.configServer.NameServer, "[color green]Você removeu [color #ffffff]" + playerName + "[/color] da sua lista de amigos.");
+                pl.MessageFrom(ProjectX.configServer.NameServer, string.Format(Friends.configFriends.warnRemove, playerName) );
 
             }
             else
             {
-                pl.MessageFrom(ProjectX.configServer.NameServer, string.Format("[color yellow]Nenhum player da sua lista com este nome: [color #ffffff]{0}[/color], tente usar o SteamID.", playerName));
+                pl.MessageFrom(ProjectX.configServer.NameServer, string.Format(Friends.configFriends.playerNotFoundInList, playerName));
                 return;
             }
         }
@@ -59,7 +100,7 @@ namespace ProjectX.Plugins
             }
             else
             {
-                pl.MessageFrom(ProjectX.configServer.NameServer, "[color yellow]Você não tem amigos.");
+                pl.MessageFrom(ProjectX.configServer.NameServer, Friends.configFriends.noHaveFriends);
             }
 
         }
@@ -74,7 +115,7 @@ namespace ProjectX.Plugins
 
             if (playerName == string.Empty)
             {
-                pl.MessageFrom(ProjectX.configServer.NameServer, "[color yellow] Para adicionar um amigo use:[/color]  /addfriend Nome");
+                pl.MessageFrom(ProjectX.configServer.NameServer, Friends.configFriends.helpAdd);
                 return;
             }
 
@@ -84,25 +125,25 @@ namespace ProjectX.Plugins
             {
                 if (ProjectX.friendList.ContainsKey(pl.UID))
                 {
-                    if (ProjectX.friendList[pl.UID].Count >= ProjectX.configServer.limitFriends)
+                    if (ProjectX.friendList[pl.UID].Count >= Friends.configFriends.limitFriends)
                     {
-                        pl.MessageFrom(ProjectX.configServer.NameServer, "[color yellow]Você atingiu o numero máximo de amigos.");
+                        pl.MessageFrom(ProjectX.configServer.NameServer, Friends.configFriends.warnLimitFriends);
                     }
                     else
                     {
                         ProjectX.friendList[pl.UID].Add(cachePlayer2.SteamID);
-                        pl.MessageFrom(ProjectX.configServer.NameServer, "[color green]Você adicionou o [color #ffffff]" + cachePlayer2.Name + "[/color] em sua lista de amigos.");
+                        pl.MessageFrom(ProjectX.configServer.NameServer, string.Format(Friends.configFriends.warnAdd, cachePlayer2.Name) );
                     }
                 }
                 else
                 {
                     ProjectX.friendList.Add(pl.UID, new List<string>() { cachePlayer2.SteamID });
-                    pl.MessageFrom(ProjectX.configServer.NameServer, "[color green]Você adicionou o [color #ffffff]" + cachePlayer2.Name + "[/color] em sua lista de amigos.");
+                    pl.MessageFrom(ProjectX.configServer.NameServer, string.Format(Friends.configFriends.warnAdd, cachePlayer2.Name) );
                 }
             }
             else
             {
-                pl.MessageFrom(ProjectX.configServer.NameServer, "[color yellow]Player não encontrado.");
+                pl.MessageFrom(ProjectX.configServer.NameServer, Friends.configFriends.playerNotFound);
             }
 
         }
