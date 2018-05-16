@@ -6,6 +6,25 @@ namespace ProjectX.Plugins
 {
     public class LocCommand
     {
+
+        public class Config
+        {
+            public string warnYourLocation;
+
+            public Config Default()
+            {
+                warnYourLocation = "[color #00ff45]{3} localização [/color]( X {0} [color #00ff45]|[/color] Y {1} [color #00ff45]|[/color] Z {2} )[color #00ff45] perto de [/color]{4}";
+                return this;
+            }
+        }
+
+        public static Config configLocation = new Config();
+
+        public static void Start()
+        {
+            configLocation = ProjectX.ReadyConfigChecked<Config>(configLocation.Default(), "config/location.json");
+        }
+
         public static float nearest;
         public static Vector2 nearestVector;
         public static float cachedDistance;
@@ -85,7 +104,7 @@ namespace ProjectX.Plugins
             {
 
                 string[] v3 = location.Location.ToString("F").Trim(new char[] { '(', ')', ' ' }).Split(new char[] { ',' });
-                reply = string.Format("[color #00ff45]{3} localização [/color]( X {0} [color #00ff45]|[/color] Y {1} [color #00ff45]|[/color] Z {2} )[color #00ff45] perto de [/color]{4}", v3[0], v3[1], v3[2], (location.PlayerClient.netUser == source ? "Sua" : location.PlayerClient.userName), FindLocationName(location.Location));
+                reply = string.Format(configLocation.warnYourLocation, v3[0], v3[1], v3[2], (location.PlayerClient.netUser == source ? "Sua" : location.PlayerClient.userName), FindLocationName(location.Location));
                 flag = true;
             }
             catch (Exception)

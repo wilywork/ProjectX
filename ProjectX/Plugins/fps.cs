@@ -1,5 +1,29 @@
 namespace ProjectX.Plugins
 {
+
+    class Fps
+    {
+        public class Config
+        {
+            public string warnGraphicMax;
+            public string warnGraphicMin;
+
+            public Config Default()
+            {
+                warnGraphicMax = "[color orange] Gráfico no máximo.";
+                warnGraphicMin = "[color orange] Gráfico no máximo.";
+                return this;
+            }
+        }
+
+        public static Config configFps = new Config();
+
+        public static void Start()
+        {
+            configFps = ProjectX.ReadyConfigChecked<Config>(configFps.Default(), "config/fps.json");
+        }
+    }
+
     class FpsOffCommand
     {
 
@@ -31,7 +55,7 @@ namespace ProjectX.Plugins
                 player.SendCommand("terrain.idleinterval 4");
                 player.SendCommand("water.reflection True");
                 player.SendCommand("config.save");
-                player.MessageFrom(ProjectX.configServer.NameServer, "[color orange] Gráfico no máximo.");
+                player.MessageFrom(ProjectX.configServer.NameServer, Fps.configFps.warnGraphicMax);
             }
         }
     }
@@ -67,7 +91,7 @@ namespace ProjectX.Plugins
                 player.SendCommand("terrain.idleinterval 4");
                 player.SendCommand("water.reflection True");
                 player.SendCommand("config.save");
-                player.MessageFrom(ProjectX.configServer.NameServer, "[color orange] Gráfico no máximo.");
+                player.MessageFrom(ProjectX.configServer.NameServer, Fps.configFps.warnGraphicMax);
             }
             else {
 
@@ -94,7 +118,7 @@ namespace ProjectX.Plugins
                 player.SendCommand("terrain.idleinterval 0");
                 player.SendCommand("water.reflection false");
                 player.SendCommand("config.save");
-                player.MessageFrom(ProjectX.configServer.NameServer, "[color orange] Gráfico no mínimo.");
+                player.MessageFrom(ProjectX.configServer.NameServer, Fps.configFps.warnGraphicMin);
             }
 
         }

@@ -58,7 +58,6 @@ namespace ProjectX
                 InventoryFull = "Inventário cheio!";
                 totalDeDiasSemlogar = 5;
                 timerSaveFilesSeconds = 3600;
-                limitShares = 6;
                 return this;
             }
         }
@@ -406,6 +405,7 @@ namespace ProjectX
                     ShowDamange.Start();
                     Avisos.Start();
                     Friends.Start();
+                    Share.Start();
                 }
                 catch (Exception ex)
                 {

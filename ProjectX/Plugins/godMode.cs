@@ -3,9 +3,25 @@ namespace ProjectX.Plugins
     public class GodModeCommand
     {
 
-        public static string notPermission = "[color red]Você não tem permissão para usar este comando";
-        public static string godModeDisable = "[color red] God Mode foi desativado.";
-        public static string godModeEnable = "[color green] God Mode foi ativado.";
+        public class Config
+        {
+            public string godModeDisable;
+            public string godModeEnable;
+
+            public Config Default()
+            {
+                godModeDisable = "[color red] God Mode foi desativado.";
+                godModeEnable = "[color green] God Mode foi ativado.";
+                return this;
+            }
+        }
+
+        public static Config configGodMode = new Config();
+
+        public static void Start()
+        {
+            configGodMode = ProjectX.ReadyConfigChecked<Config>(configGodMode.Default(), "config/godMode.json");
+        }
 
         public static void Execute(ConsoleSystem.Arg Arguments, string[] ChatArguments)
         {
@@ -15,16 +31,16 @@ namespace ProjectX.Plugins
                 if (ChatArguments.Length > 0)
                 {
                     cachePlayer.PlayerClient.rootControllable.rootCharacter.takeDamage.SetGodMode(false);
-                    cachePlayer.MessageFrom(ProjectX.configServer.NameServer, godModeDisable);
+                    cachePlayer.MessageFrom(ProjectX.configServer.NameServer, configGodMode.godModeDisable);
                 }
                 else {
                     cachePlayer.PlayerClient.rootControllable.rootCharacter.takeDamage.SetGodMode(true);
-                    cachePlayer.MessageFrom(ProjectX.configServer.NameServer, godModeEnable);
+                    cachePlayer.MessageFrom(ProjectX.configServer.NameServer, configGodMode.godModeEnable);
                 }
             }
             else
             {
-                Fougerite.Server.Cache[Arguments.argUser.userID].MessageFrom(ProjectX.configServer.NameServer, notPermission);
+                Fougerite.Server.Cache[Arguments.argUser.userID].MessageFrom(ProjectX.configServer.NameServer, ProjectX.configServer.WarnNotPermission);
             }
         }
     }
